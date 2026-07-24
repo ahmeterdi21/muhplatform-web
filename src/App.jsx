@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import { 
   Home, BookOpen, MessageSquare, Settings as SettingsIcon, LogOut, 
   Settings, Cpu, ShieldAlert, Users, Circle, User, LayoutGrid, 
-  Calculator as CalculatorIcon, Crown, MonitorPlay 
+  Calculator as CalculatorIcon, Crown, MonitorPlay, MessageCircle 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { gsap } from 'gsap'; // GSAP eklendi
+import { gsap } from 'gsap';
 import { supabase } from './supabase';
 
 import Landing from './pages/Landing';
@@ -20,8 +20,9 @@ import Profile from './pages/Profile';
 import Calculator from './pages/Calculator';
 import Chess from './pages/Chess';
 import PrivateRooms from './pages/PrivateRooms';
+import PrivateChat from './pages/PrivateChat'; 
 
-// --- TEMA KONFİGÜRASYONU (GLOBAL) ---
+// --- TEMA KONFİGÜRASYONU ---
 export const ThemeContext = createContext();
 
 export const themeConfig = {
@@ -32,8 +33,8 @@ export const themeConfig = {
   purple: { id: 'purple', name: 'Ametist Moru', text: 'text-purple-400', text500: 'text-purple-500', bg: 'bg-purple-500', bgLight: 'bg-purple-500/10', bgActive: 'bg-purple-500/15', border: 'border-purple-500/30', borderHover: 'hover:border-purple-500/40', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.2)]', glowStrong: 'shadow-[0_0_20px_rgba(168,85,247,0.4)]', fill: 'fill-purple-500', selectionBg: 'selection:bg-purple-500/30', hex: '#a855f7' }
 };
 
-// --- YENİ EKLENEN GSAP ANİMASYONLU MENÜ BUTONU (PILL ITEM) ---
-function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger = false }) {
+// --- MENÜ BUTONU ---
+function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger = false, notificationCount = 0 }) {
   const circleRef = useRef(null);
   const iconNormalRef = useRef(null);
   const iconHoverRef = useRef(null);
@@ -44,12 +45,10 @@ function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger
     const iconNormal = iconNormalRef.current;
     const iconHover = iconHoverRef.current;
 
-    // Animasyon Başlangıç Durumları
     gsap.set(circle, { scale: 0, xPercent: -50, yPercent: -50, left: "50%", top: "100%" });
     gsap.set(iconNormal, { y: 0, opacity: 1 });
     gsap.set(iconHover, { y: 40, opacity: 0 });
 
-    // Timeline Oluşturma
     const tl = gsap.timeline({ paused: true });
     
     tl.to(circle, { scale: 3, duration: 0.35, ease: "power2.out" }, 0);
@@ -66,24 +65,29 @@ function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger
 
   const content = (
     <div 
-      className={`relative w-12 h-12 flex items-center justify-center rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${isActive ? `${theme.bgLight} ${theme.border} ${theme.glow}` : 'hover:bg-white/[0.02]'}`}
+      className={`relative w-12 h-12 flex items-center justify-center rounded-2xl overflow-visible cursor-pointer transition-all duration-300 ${isActive ? `${theme.bgLight} ${theme.border} ${theme.glow}` : 'hover:bg-white/[0.02]'}`}
       onMouseEnter={handleEnter}
       onMouseLeave={handleLeave}
       onClick={onClick}
       title={title}
     >
-      <span 
-        ref={circleRef} 
-        className="absolute rounded-full w-12 h-12 pointer-events-none z-0" 
-        style={{ backgroundColor: isDanger ? '#ef4444' : theme.hex }}
-      ></span>
+      {notificationCount > 0 && (
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 z-50">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-[#0a0a0a] items-center justify-center text-[9px] font-black text-white shadow-lg">
+            {notificationCount > 9 ? '9+' : notificationCount}
+          </span>
+        </span>
+      )}
+
+      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <span ref={circleRef} className="absolute rounded-full w-12 h-12 pointer-events-none z-0" style={{ backgroundColor: isDanger ? '#ef4444' : theme.hex }}></span>
+      </div>
       
-      {/* Normal Durumdaki İkon */}
       <div ref={iconNormalRef} className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <Icon className={`w-6 h-6 ${isActive ? theme.text : isDanger ? 'text-red-400' : 'text-gray-500'}`} />
       </div>
       
-      {/* Hover Durumunda Alttan Gelen Siyah (veya beyaz) İkon */}
       <div ref={iconHoverRef} className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <Icon className={`w-6 h-6 ${isDanger ? 'text-white' : 'text-[#121212]'}`} />
       </div>
@@ -96,7 +100,8 @@ function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger
   return content;
 }
 
-function SidebarNav({ isAdmin }) {
+// SIDEBAR NAVİGASYON
+function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
   const { theme } = useContext(ThemeContext);
   const location = useLocation();
   const currentPath = location.pathname;
@@ -104,7 +109,6 @@ function SidebarNav({ isAdmin }) {
   const hubRef = useRef(null);
   const logoRef = useRef(null);
 
-  // Logo Spin Animasyonu
   const handleLogoEnter = () => {
     gsap.fromTo(logoRef.current, { rotate: 0 }, { rotate: 360, duration: 0.5, ease: "power3.out", overwrite: "auto" });
   };
@@ -121,29 +125,23 @@ function SidebarNav({ isAdmin }) {
     <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 justify-between backdrop-blur-xl bg-[#0a0a0a]/80 z-50 relative flex-shrink-0 h-screen sticky top-0 font-sans shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
       
       <div className="flex flex-col items-center gap-5 w-full">
-        {/* LOGO */}
-        <div 
-          ref={logoRef}
-          onMouseEnter={handleLogoEnter}
-          className={`w-12 h-12 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl mb-6 cursor-pointer ${theme.glowStrong}`}
-        >
+        <div ref={logoRef} onMouseEnter={handleLogoEnter} className={`w-12 h-12 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl mb-6 cursor-pointer ${theme.glowStrong}`}>
           M
         </div>
         
-        {/* MENÜ LİNKLERİ (PILL NAV EFEKTİYLE) */}
         <PillNavItem to="/" icon={Home} isActive={currentPath === '/'} theme={theme} title="Ana Panel" />
         <PillNavItem to="/courses" icon={BookOpen} isActive={currentPath === '/courses'} theme={theme} title="Ders Notları" />
-        <PillNavItem to="/lobby" icon={MessageSquare} isActive={currentPath === '/lobby'} theme={theme} title="Ortak Lobi" />
+        <PillNavItem to="/lobby" icon={MessageSquare} isActive={currentPath === '/lobby'} theme={theme} title="Ortak Lobi" notificationCount={unreadLobbyCount} />
         <PillNavItem to="/profile" icon={User} isActive={currentPath === '/profile'} theme={theme} title="Profilim" />
 
-        {/* SİSTEM ARAÇLARI HUB */}
         <div className="relative mt-2" ref={hubRef}>
           <PillNavItem 
             icon={LayoutGrid} 
             onClick={() => setShowHub(!showHub)}
-            isActive={showHub || currentPath === '/calculator' || currentPath === '/chess' || currentPath === '/private-rooms' || currentPath === '/admin'} 
+            isActive={showHub || currentPath === '/calculator' || currentPath === '/chess' || currentPath === '/private-rooms' || currentPath === '/admin' || currentPath === '/chat'} 
             theme={theme} 
             title="Sistem Araçları" 
+            notificationCount={unreadPrivateCount} // Sistem araçlarına özel chat bildirimini ekledik
           />
 
           <AnimatePresence>
@@ -151,6 +149,17 @@ function SidebarNav({ isAdmin }) {
               <motion.div initial={{ opacity: 0, x: -10, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute left-[calc(100%+1.5rem)] top-1/2 -translate-y-1/2 w-64 bg-[#121212] border border-white/10 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 backdrop-blur-xl">
                 <div className="px-3 py-2 mb-1 border-b border-white/5"><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sistem Araçları</p></div>
                 
+                {/* ÖZEL MESAJLAR BURAYA TAŞINDI */}
+                <Link to="/chat" onClick={() => setShowHub(false)} className={`flex items-center justify-between p-3 rounded-xl transition-all ${currentPath === '/chat' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm font-bold">Özel Mesajlar</span>
+                  </div>
+                  {unreadPrivateCount > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">{unreadPrivateCount}</span>
+                  )}
+                </Link>
+
                 <Link to="/private-rooms" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/private-rooms' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
                   <MonitorPlay className="w-5 h-5" />
                   <span className="text-sm font-bold">Özel Odalar</span>
@@ -188,14 +197,67 @@ function SidebarNav({ isAdmin }) {
 
 function AppContent() {
   const { theme } = useContext(ThemeContext);
+  const location = useLocation(); 
+  const currentPathRef = useRef(location.pathname);
+
   const [session, setSession] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeUsers, setActiveUsers] = useState([]);
   const [showActiveModal, setShowActiveModal] = useState(false);
+  
   const [studySeconds, setStudySeconds] = useState(0);
   const studySecondsRef = useRef(0);
   const awardedHoursRef = useRef(0);
+
+  // BİLDİRİM STATE'LERİ
+  const [unreadLobbyCount, setUnreadLobbyCount] = useState(0);
+  const [unreadPrivateCount, setUnreadPrivateCount] = useState(0);
+
+  useEffect(() => {
+    currentPathRef.current = location.pathname;
+    if (location.pathname === '/lobby') setUnreadLobbyCount(0);
+    // Özel chate girildiğinde PrivateChat sayfasının içindeki sistem mesajları "görüldü" yapar,
+    // o yüzden burada private count'u direk 0 yapmıyoruz.
+  }, [location.pathname]);
+
+  const fetchTotalUnreadPrivate = async (userId) => {
+    const { count } = await supabase
+      .from('direct_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', userId)
+      .eq('is_read', false);
+    setUnreadPrivateCount(count || 0);
+  };
+
+  useEffect(() => {
+    if (!session) return;
+    
+    fetchTotalUnreadPrivate(session.user.id); // İlk girişte sayıları çek
+
+    // Lobi dinleyicisi
+    const globalLobbyChannel = supabase
+      .channel('global_lobby_notifications')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lobby_messages' }, (payload) => {
+        if (currentPathRef.current !== '/lobby' && payload.new.sender_id !== session.user.id) {
+          setUnreadLobbyCount(prev => prev + 1);
+        }
+      })
+      .subscribe();
+
+    // Özel Chat dinleyicisi
+    const privateChannel = supabase
+      .channel('global_private_notifications')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
+         fetchTotalUnreadPrivate(session.user.id);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(globalLobbyChannel);
+      supabase.removeChannel(privateChannel);
+    };
+  }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -284,20 +346,21 @@ function AppContent() {
         <Routes><Route path="/" element={<Landing />} /><Route path="/auth" element={<Auth />} /><Route path="*" element={<Navigate to="/" />} /></Routes>
       ) : (
         <div className={`min-h-screen bg-[#0a0a0a] text-white flex overflow-hidden font-sans ${theme.selectionBg} relative w-full`}>
+          
           <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px]"></div>
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 100, repeat: Infinity, ease: "linear" }} className={`absolute -top-32 -left-32 ${theme.text500} opacity-5`}><Settings className="w-[500px] h-[500px]" strokeWidth={0.5} /></motion.div>
             <motion.div animate={{ rotate: -360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }} className="absolute -bottom-32 -right-32 text-white opacity-[0.02]"><Cpu className="w-[600px] h-[600px]" strokeWidth={0.5} /></motion.div>
           </div>
           
-          {/* YENİ GSAP ANİMASYONLU SIDEBAR */}
-          <SidebarNav isAdmin={isAdmin} />
+          <SidebarNav isAdmin={isAdmin} unreadLobbyCount={unreadLobbyCount} unreadPrivateCount={unreadPrivateCount} />
 
           <div className="flex-1 relative z-10 overflow-y-auto h-screen custom-scrollbar">
             <Routes>
               <Route path="/" element={<Dashboard totalSeconds={studySeconds} />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/lobby" element={<Lobby />} />
+              <Route path="/chat" element={<PrivateChat />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/calculator" element={<Calculator />} />
