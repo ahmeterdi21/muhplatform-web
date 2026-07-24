@@ -7,6 +7,8 @@ import {
   XCircle, Radio, CheckSquare, CalendarDays, UploadCloud, Loader2, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 export default function PrivateRooms() {
   const { theme } = useContext(ThemeContext);
@@ -48,7 +50,6 @@ export default function PrivateRooms() {
     };
     init();
 
-    // Lobideki odaları dinleyen ana kanal
     const roomsSub = supabase.channel('private_rooms_list')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'private_rooms' }, () => {
         fetchPrivateRooms();
@@ -64,7 +65,6 @@ export default function PrivateRooms() {
     fetchRoomMessages(activeRoom.id);
     fetchRoomParticipants(activeRoom.id);
 
-    // DÜZELTME 4: Mesaj dinleyicisini '*' (Tüm olaylar: Insert, Delete) olarak ayarladık ki silinince de anında güncellensin
     const roomMsgsSub = supabase.channel(`room_msgs_${activeRoom.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'private_room_messages', filter: `room_id=eq.${activeRoom.id}` }, () => {
         fetchRoomMessages(activeRoom.id);
@@ -108,7 +108,6 @@ export default function PrivateRooms() {
     const msg = roomInput;
     setRoomInput('');
 
-    // Anında ekrana yansıtma (Optimistic UI)
     const optimisticMsg = {
       id: crypto.randomUUID(),
       room_id: activeRoom.id,
@@ -122,13 +121,9 @@ export default function PrivateRooms() {
     await supabase.from('private_room_messages').insert([{ room_id: activeRoom.id, sender_id: currentUser.id, message: msg }]);
   };
 
-  // DÜZELTME 4: Adminlerin Mesaj Silme Fonksiyonu
   const deleteMessage = async (messageId) => {
     if (!window.confirm("Bu mesajı silmek istediğinize emin misiniz?")) return;
-    
-    // Anında ekrandan kaldır
     setRoomMessages(prev => prev.filter(m => m.id !== messageId));
-    // Veritabanından sil
     await supabase.from('private_room_messages').delete().eq('id', messageId);
   };
 
@@ -165,12 +160,9 @@ export default function PrivateRooms() {
     }
   };
 
-  // DÜZELTME: Kendini listede hemen görebilmek için asenkron (await) sırasını sabitledik
   const joinRoomDirectly = async (room) => {
     setActiveRoom(room);
-    // Önce zorla veritabanına eklemesini bekle
     await supabase.from('room_participants').insert([{ room_id: room.id, user_id: currentUser.id }]).catch(()=>{});
-    // Ekleme bittikten SONRA listeyi çek
     fetchRoomParticipants(room.id);
   };
 
@@ -185,13 +177,11 @@ export default function PrivateRooms() {
     if (!window.confirm("Bu çalışma odasını kalıcı olarak silmek istediğinize emin misiniz?")) return;
     await supabase.from('private_rooms').delete().eq('id', activeRoom.id);
     
-    // F5 Atmaya gerek kalmadan odayı ekrandan ve lobiden uçur
     setPrivateRooms(prev => prev.filter(r => r.id !== activeRoom.id));
     setActiveRoom(null);
     setShowSettings(false);
   };
 
-  // DÜZELTME: Resim yüklendiğinde F5 gerektirmeden Lobideki görselin de değişmesi
   const handleImageUpload = async (e) => {
     try {
       setUploadingImage(true);
@@ -209,7 +199,6 @@ export default function PrivateRooms() {
 
       await supabase.from('private_rooms').update({ room_image: publicUrl }).eq('id', activeRoom.id);
       
-      // Anlık Güncelleme (F5'siz)
       setActiveRoom({ ...activeRoom, room_image: publicUrl });
       setPrivateRooms(prev => prev.map(r => r.id === activeRoom.id ? { ...r, room_image: publicUrl } : r));
       
@@ -226,12 +215,24 @@ export default function PrivateRooms() {
   if (activeRoom) {
     const isRoomAdmin = activeRoom.admin_id === currentUser?.id;
     const isGlobalAdmin = currentUser?.is_admin;
-    const hasAdminPowers = isRoomAdmin || isGlobalAdmin; // Admin yetkileri kontrolü
+    const hasAdminPowers = isRoomAdmin || isGlobalAdmin;
 
     return (
-      <div className="flex-1 flex flex-col h-screen font-sans overflow-hidden bg-[#0a0a0a]">
-        
-        <header className="h-16 bg-[#121212] border-b border-white/5 flex items-center justify-between px-6 flex-shrink-0 z-20 shadow-md">
+      <div className="flex-1 flex flex-col h-screen font-sans overflow-hidden bg-[#0a0a0a] relative">
+        <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+          <Particles
+            particleColors={['#ffffff', theme.hex]} 
+            particleCount={250}
+            particleSpread={10}
+            speed={0.1}
+            moveParticlesOnHover={true}
+            particleHoverFactor={1.5}
+            alphaParticles={true}
+            particleBaseSize={100}
+          />
+        </div>
+
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-6 flex-shrink-0 z-20 shadow-md relative">
           <div className="flex items-center gap-3">
             <img src={activeRoom.room_image} alt="Room" className="w-10 h-10 rounded-xl object-cover border border-white/10" />
             <div>
@@ -253,177 +254,173 @@ export default function PrivateRooms() {
           </div>
         </header>
 
-        <div className="flex-1 flex overflow-hidden">
-          
-          <div className="w-64 bg-[#0d0f12] border-r border-white/5 p-4 flex flex-col gap-2 overflow-y-auto hidden md:flex">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 px-2">Oda Kanalları</p>
-
-            <button onClick={() => setRoomTab('chat')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'chat' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <MessageSquare className="w-5 h-5" /> Grup Sohbeti
-            </button>
-
-            <button onClick={() => setRoomTab('video')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'video' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <Video className="w-5 h-5" /> Görüntülü Çalışma
-            </button>
-
-            <button onClick={() => setRoomTab('space')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'space' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <Radio className="w-5 h-5" /> Space Odası (Sesli)
-            </button>
-
-            <button onClick={() => setRoomTab('schedule')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'schedule' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <CheckSquare className="w-5 h-5" /> Çalışma Programı
-            </button>
-
-            <button onClick={() => setRoomTab('attendance')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'attendance' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <CalendarDays className="w-5 h-5" /> Ders Yoklaması
-            </button>
-
-            <div className="h-px bg-white/5 my-2 mx-2"></div>
-
-            <button onClick={() => setRoomTab('members')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left ${roomTab === 'members' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-              <Users className="w-5 h-5" /> Üyeler
-            </button>
-          </div>
-
-          <div className="flex-1 bg-black/40 relative overflow-hidden flex flex-col">
+        <div className="flex-1 flex overflow-hidden p-4 pt-0 relative z-10">
+          <SpotlightCard className="flex-1 flex w-full rounded-3xl shadow-2xl overflow-hidden" enableTilt={false} particleCount={20}>
             
-            {roomTab === 'chat' && (
-              <>
-                <div className="p-4 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className={`w-5 h-5 ${theme.text}`} /> 
-                    <h3 className="font-bold text-white"># Grup Sohbeti</h3>
-                  </div>
-                  {hasAdminPowers && <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20">Yönetici Modu Aktif</span>}
-                </div>
-                
-                <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-                  {roomMessages.length === 0 && (
-                    <div className="h-full flex flex-col items-center justify-center text-gray-500 font-bold text-sm">
-                      <MessageSquare className="w-12 h-12 mb-4 opacity-20" />
-                      Bu odada henüz mesaj yok. İlk mesajı sen gönder!
+            <div className="w-64 bg-black/40 border-r border-white/5 p-4 flex flex-col gap-2 overflow-y-auto hidden md:flex relative z-10">
+              <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 px-2">Oda Kanalları</p>
+
+              <button onClick={() => setRoomTab('chat')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'chat' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <MessageSquare className="w-5 h-5" /> Grup Sohbeti
+              </button>
+
+              <button onClick={() => setRoomTab('video')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'video' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <Video className="w-5 h-5" /> Görüntülü Çalışma
+              </button>
+
+              <button onClick={() => setRoomTab('space')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'space' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <Radio className="w-5 h-5" /> Space Odası (Sesli)
+              </button>
+
+              <button onClick={() => setRoomTab('schedule')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'schedule' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <CheckSquare className="w-5 h-5" /> Çalışma Programı
+              </button>
+
+              <button onClick={() => setRoomTab('attendance')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'attendance' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <CalendarDays className="w-5 h-5" /> Ders Yoklaması
+              </button>
+
+              <div className="h-px bg-white/5 my-2 mx-2"></div>
+
+              <button onClick={() => setRoomTab('members')} className={`flex items-center gap-3 w-full p-3.5 rounded-2xl transition-all font-bold text-sm text-left cursor-pointer ${roomTab === 'members' ? `${theme.bg} text-black shadow-lg` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <Users className="w-5 h-5" /> Üyeler
+              </button>
+            </div>
+
+            <div className="flex-1 bg-black/60 relative overflow-hidden flex flex-col z-10">
+              
+              {roomTab === 'chat' && (
+                <>
+                  <div className="p-4 border-b border-white/5 bg-white/[0.01] flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className={`w-5 h-5 ${theme.text}`} /> 
+                      <h3 className="font-bold text-white"># Grup Sohbeti</h3>
                     </div>
-                  )}
-                  {roomMessages.map((msg) => {
-                    const isMe = msg.sender_id === currentUser?.id;
-                    
-                    return (
-                      // DÜZELTME 2: Sağ-Sol Hizalama Flex Yapısı
-                      <div key={msg.id} className={`flex gap-3 w-full ${isMe ? 'flex-row-reverse' : 'flex-row'} group`}>
-                        <img src={msg.profiles?.avatar_url} alt="" className="w-10 h-10 rounded-xl border border-white/10 flex-shrink-0 object-cover" />
-                        
-                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]`}>
-                          <div className={`flex items-baseline gap-2 mb-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                            <span className={`text-[12px] font-bold ${isMe ? theme.text : 'text-gray-300'}`}>
-                              {msg.profiles?.full_name}
-                            </span>
-                            <span className="text-[10px] text-gray-600 font-bold">
-                              {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
+                    {hasAdminPowers && <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20">Yönetici Modu Aktif</span>}
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+                    {roomMessages.length === 0 && (
+                      <div className="h-full flex flex-col items-center justify-center text-gray-500 font-bold text-sm">
+                        <MessageSquare className="w-12 h-12 mb-4 opacity-20" />
+                        Bu odada henüz mesaj yok. İlk mesajı sen gönder!
+                      </div>
+                    )}
+                    {roomMessages.map((msg) => {
+                      const isMe = msg.sender_id === currentUser?.id;
+                      
+                      return (
+                        <div key={msg.id} className={`flex gap-3 w-full ${isMe ? 'flex-row-reverse' : 'flex-row'} group`}>
+                          <img src={msg.profiles?.avatar_url} alt="" className="w-10 h-10 rounded-xl border border-white/10 flex-shrink-0 object-cover" />
                           
-                          <div className="flex items-center gap-2 group-hover:opacity-100 relative">
-                            {/* DÜZELTME 3: Yönetici İçin Mesaj Silme Butonu */}
-                            {hasAdminPowers && !isMe && (
-                              <button onClick={() => deleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer" title="Mesajı Sil">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-
-                            <div className={`text-sm p-3.5 rounded-2xl shadow-sm ${isMe ? `${theme.bgLight} border ${theme.border} text-white rounded-tr-sm` : 'bg-white/[0.03] border border-white/5 text-gray-200 rounded-tl-sm'}`}>
-                              {msg.message}
+                          <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                            <div className={`flex items-baseline gap-2 mb-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                              <span className={`text-[12px] font-bold ${isMe ? theme.text : 'text-gray-300'}`}>
+                                {msg.profiles?.full_name}
+                              </span>
+                              <span className="text-[10px] text-gray-600 font-bold">
+                                {new Date(msg.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
                             </div>
+                            
+                            <div className="flex items-center gap-2 group-hover:opacity-100 relative">
+                              {hasAdminPowers && !isMe && (
+                                <button onClick={() => deleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer" title="Mesajı Sil">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
 
-                            {hasAdminPowers && isMe && (
-                              <button onClick={() => deleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer" title="Mesajı Sil">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                              <div className={`text-sm p-3.5 rounded-2xl shadow-sm ${isMe ? `${theme.bgLight} border ${theme.border} text-white rounded-tr-sm` : 'bg-white/[0.03] border border-white/5 text-gray-200 rounded-tl-sm'}`}>
+                                {msg.message}
+                              </div>
+
+                              {hasAdminPowers && isMe && (
+                                <button onClick={() => deleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all cursor-pointer" title="Mesajı Sil">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={roomChatRef} />
-                </div>
+                      );
+                    })}
+                    <div ref={roomChatRef} />
+                  </div>
 
-                <form onSubmit={handleSendPrivate} className="p-4 bg-[#121212] border-t border-white/5">
-                  <div className="relative">
-                    <input 
-                      type="text" value={roomInput} onChange={(e) => setRoomInput(e.target.value)}
-                      placeholder={`${activeRoom.name} odasına mesaj gönder...`} 
-                      className="w-full bg-black border border-white/10 rounded-xl py-4 pl-4 pr-14 text-sm font-bold text-white focus:outline-none focus:border-white/30"
-                    />
-                    <button type="submit" className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg ${theme.bg} text-black flex items-center justify-center cursor-pointer hover:opacity-90`}>
-                      <Send className="w-4 h-4 ml-1" />
+                  <form onSubmit={handleSendPrivate} className="p-4 bg-black/40 border-t border-white/5">
+                    <div className="relative">
+                      <input 
+                        type="text" value={roomInput} onChange={(e) => setRoomInput(e.target.value)}
+                        placeholder={`${activeRoom.name} odasına mesaj gönder...`} 
+                        className="w-full bg-black/60 border border-white/10 rounded-xl py-4 pl-4 pr-14 text-sm font-bold text-white focus:outline-none focus:border-white/30"
+                      />
+                      <button type="submit" className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg ${theme.bg} text-black flex items-center justify-center cursor-pointer hover:opacity-90`}>
+                        <Send className="w-4 h-4 ml-1" />
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+
+              {roomTab === 'video' && (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] relative p-6">
+                  <div className="z-10 flex flex-col items-center max-w-md text-center bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                      <Video className={`w-10 h-10 ${theme.text} animate-pulse`} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-3">Canlı Çalışma Masası</h2>
+                    <p className="text-sm text-gray-400 font-medium mb-8 leading-relaxed">
+                      Kesintisiz, süre sınırı olmayan ve sen sekmeler arası gezinirken kapanmayan bir deneyim için görüntülü görüşme <strong className="text-white">yeni sekmede</strong> açılacaktır.
+                    </p>
+                    <button 
+                      onClick={() => window.open(`https://meet.jit.si/Muehplattmon_Room_${activeRoom.id.replace(/-/g, '')}`, '_blank')}
+                      className={`w-full py-4 rounded-xl ${theme.bg} text-black font-black text-sm transition-all flex items-center justify-center gap-3 ${theme.glowStrong} hover:scale-[1.02] cursor-pointer`}
+                    >
+                      Kamerayı Aç & Masaya Katıl <ExternalLink className="w-5 h-5" />
                     </button>
                   </div>
-                </form>
-              </>
-            )}
+                </div>
+              )}
 
-            {/* DÜZELTME 1: Sınırsız, Kesintisiz Jitsi (Yeni Sekme) */}
-            {roomTab === 'video' && (
-              <div className="w-full h-full flex flex-col items-center justify-center bg-[#0a0a0a] relative p-6">
-                <div className="absolute inset-0 bg-[url('https://api.dicebear.com/7.x/shapes/svg?seed=pattern')] opacity-5"></div>
-                
-                <div className="z-10 flex flex-col items-center max-w-md text-center bg-white/[0.02] border border-white/10 p-8 rounded-3xl backdrop-blur-md shadow-2xl">
-                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.05)]">
-                    <Video className={`w-10 h-10 ${theme.text} animate-pulse`} />
+              {roomTab === 'members' && (
+                <div className="h-full flex flex-col">
+                  <div className="p-4 border-b border-white/5 bg-white/[0.01] flex items-center gap-2">
+                    <Users className={`w-5 h-5 ${theme.text}`} /> 
+                    <h3 className="font-bold text-white"># Odadaki Üyeler ({roomParticipants.length})</h3>
                   </div>
-                  <h2 className="text-2xl font-bold text-white mb-3">Canlı Çalışma Masası</h2>
-                  <p className="text-sm text-gray-400 font-medium mb-8 leading-relaxed">
-                    Kesintisiz, süre sınırı olmayan ve sen sekmeler arası gezinirken kapanmayan bir deneyim için görüntülü görüşme <strong className="text-white">yeni sekmede</strong> açılacaktır.
-                  </p>
-                  
-                  <button 
-                    onClick={() => window.open(`https://meet.jit.si/Muehplattmon_Room_${activeRoom.id.replace(/-/g, '')}`, '_blank')}
-                    className={`w-full py-4 rounded-xl ${theme.bg} text-black font-black text-sm transition-all flex items-center justify-center gap-3 ${theme.glowStrong} hover:scale-[1.02] cursor-pointer`}
-                  >
-                    Kamerayı Aç & Masaya Katıl <ExternalLink className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {roomTab === 'members' && (
-              <div className="h-full flex flex-col">
-                <div className="p-4 border-b border-white/5 bg-white/[0.01] flex items-center gap-2">
-                  <Users className={`w-5 h-5 ${theme.text}`} /> 
-                  <h3 className="font-bold text-white"># Odadaki Üyeler ({roomParticipants.length})</h3>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {roomParticipants.map(part => (
-                      <div key={part.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-4">
-                        <img src={part.profiles?.avatar_url} alt="" className="w-12 h-12 rounded-xl object-cover border border-white/10" />
-                        <div>
-                          <p className={`font-bold ${part.user_id === currentUser?.id ? theme.text : 'text-white'}`}>
-                            {part.profiles?.full_name} {part.user_id === currentUser?.id ? '(Sen)' : ''}
-                          </p>
-                          <p className="text-xs text-gray-400 font-semibold">{part.profiles?.class_level || 'Mühendislik Öğrencisi'}</p>
-                          {part.user_id === activeRoom.admin_id && <span className={`text-[9px] font-black ${theme.text} uppercase tracking-widest mt-1 block`}>Oda Kurucusu</span>}
+                  <div className="flex-1 overflow-y-auto p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {roomParticipants.map(part => (
+                        <div key={part.id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-4">
+                          <img src={part.profiles?.avatar_url} alt="" className="w-12 h-12 rounded-xl object-cover border border-white/10" />
+                          <div>
+                            <p className={`font-bold ${part.user_id === currentUser?.id ? theme.text : 'text-white'}`}>
+                              {part.profiles?.full_name} {part.user_id === currentUser?.id ? '(Sen)' : ''}
+                            </p>
+                            <p className="text-xs text-gray-400 font-semibold">{part.profiles?.class_level || 'Mühendislik Öğrencisi'}</p>
+                            {part.user_id === activeRoom.admin_id && <span className={`text-[9px] font-black ${theme.text} uppercase tracking-widest mt-1 block`}>Oda Kurucusu</span>}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {(roomTab === 'space' || roomTab === 'schedule' || roomTab === 'attendance') && (
-              <div className="h-full flex flex-col items-center justify-center text-center p-10">
-                <div className={`w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 ${theme.text}`}>
-                  {roomTab === 'space' && <Radio className="w-10 h-10" />}
-                  {roomTab === 'schedule' && <CheckSquare className="w-10 h-10" />}
-                  {roomTab === 'attendance' && <CalendarDays className="w-10 h-10" />}
+              {(roomTab === 'space' || roomTab === 'schedule' || roomTab === 'attendance') && (
+                <div className="h-full flex flex-col items-center justify-center text-center p-10">
+                  <div className={`w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6 ${theme.text}`}>
+                    {roomTab === 'space' && <Radio className="w-10 h-10" />}
+                    {roomTab === 'schedule' && <CheckSquare className="w-10 h-10" />}
+                    {roomTab === 'attendance' && <CalendarDays className="w-10 h-10" />}
+                  </div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Bu Modül Yapım Aşamasında</h2>
+                  <p className="text-gray-400 text-sm max-w-md font-medium">Bu alt sayfa için sistem entegrasyonları geliştiriliyor. Şimdilik "Grup Sohbeti" ve "Görüntülü Çalışma" aktif.</p>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Bu Modül Yapım Aşamasında</h2>
-                <p className="text-gray-400 text-sm max-w-md font-medium">Bu alt sayfa için sistem entegrasyonları geliştiriliyor. Şimdilik "Grup Sohbeti" ve "Görüntülü Çalışma" aktif.</p>
-              </div>
-            )}
+              )}
 
-          </div>
+            </div>
+          </SpotlightCard>
         </div>
 
         <AnimatePresence>
@@ -451,7 +448,6 @@ export default function PrivateRooms() {
                     <button onClick={handleDeleteRoom} className="w-full py-3.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center gap-2 cursor-pointer">
                       <Trash2 className="w-4 h-4" /> Odayı Tamamen Sil
                     </button>
-                    <p className="text-[10px] text-gray-500 text-center mt-3 font-semibold">Bu işlem odayı, içindeki mesajları ve paneli kalıcı olarak siler.</p>
                   </div>
                 </div>
 
@@ -469,7 +465,18 @@ export default function PrivateRooms() {
   // ==========================================
   return (
     <div className="flex-1 flex flex-col h-screen p-6 md:p-10 overflow-y-auto font-sans relative">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]} 
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
       
       <header className="mb-10 relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -492,19 +499,21 @@ export default function PrivateRooms() {
             </div>
           ) : (
             privateRooms.map(room => (
-              <div key={room.id} className={`bg-white/[0.03] border border-white/10 rounded-3xl overflow-hidden ${theme.borderHover} transition-all group shadow-lg flex flex-col`}>
-                <div className="h-32 bg-black/50 relative overflow-hidden">
-                  <img src={room.room_image} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-lg"><Lock className="w-3.5 h-3.5 text-gray-300" /></div>
+              <SpotlightCard key={room.id} className="rounded-3xl overflow-hidden transition-all group shadow-lg flex flex-col" enableTilt={true} clickEffect={true}>
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="h-32 bg-black/50 relative overflow-hidden">
+                    <img src={room.room_image} alt="" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md p-1.5 rounded-lg border border-white/10 shadow-lg"><Lock className="w-3.5 h-3.5 text-gray-300" /></div>
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-white font-bold text-xl mb-1 truncate">{room.name}</h3>
+                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-6">Kurucu: <span className="text-gray-200">{room.admin?.full_name}</span></p>
+                    <button onClick={() => setShowJoinRoom(room.id)} className={`mt-auto w-full py-3.5 rounded-xl bg-black/40 border border-white/10 text-white font-bold text-sm hover:${theme.bg} hover:text-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md`}>
+                      <Unlock className="w-4 h-4" /> Şifre Gir & Katıl
+                    </button>
+                  </div>
                 </div>
-                <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="text-white font-bold text-xl mb-1 truncate">{room.name}</h3>
-                  <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-6">Kurucu: <span className="text-gray-200">{room.admin?.full_name}</span></p>
-                  <button onClick={() => setShowJoinRoom(room.id)} className={`mt-auto w-full py-3.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:${theme.bg} hover:text-black transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md`}>
-                    <Unlock className="w-4 h-4" /> Şifre Gir & Katıl
-                  </button>
-                </div>
-              </div>
+              </SpotlightCard>
             ))
           )}
         </div>

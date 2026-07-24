@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Briefcase, GraduationCap, FileText, Plus, X, Edit3, Check, Award, ArrowRight, Trash2, ShieldAlert, UserPlus, UserCheck, Users, Clock, Heart, MessageCircle, Globe, Lock, Send } from 'lucide-react';
 import { supabase } from '../supabase';
 import { ThemeContext } from '../App';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 export default function Profile() {
   const { theme } = useContext(ThemeContext);
@@ -225,10 +227,24 @@ export default function Profile() {
   return (
     <div className="flex-1 p-6 md:p-10 relative overflow-y-auto font-sans">
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+      {/* EVRENSEL UZAY/YILDIZ ARKA PLANI */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]}
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto relative z-10">
         
         <div className="space-y-6">
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl">
+          <SpotlightCard className="p-6 shadow-xl" particleCount={5} enableTilt={false}>
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Users className={`w-4 h-4 ${theme.text}`} /> Bağlantı İstekleri
             </h3>
@@ -236,7 +252,7 @@ export default function Profile() {
             {pendingRequests.length === 0 ? (
               <p className="text-xs text-gray-400 font-bold">Bekleyen bağlantı isteğiniz yok.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 relative z-10">
                 {pendingRequests.map((req) => (
                   <div key={req.requestId} className="p-3 rounded-2xl bg-black/40 border border-white/10 flex flex-col gap-2.5">
                     <div onClick={() => window.location.href = `/profile?id=${req.profile.id}`} className="flex items-center gap-3 cursor-pointer group">
@@ -253,12 +269,12 @@ export default function Profile() {
                 ))}
               </div>
             )}
-          </div>
+          </SpotlightCard>
         </div>
 
         <div className="lg:col-span-2 space-y-8">
           
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-md relative overflow-hidden shadow-2xl">
+          <SpotlightCard className="p-8 relative overflow-hidden shadow-2xl" particleCount={15} enableTilt={false}>
             <div className={`absolute top-0 right-0 w-64 h-64 ${theme.bgLight} blur-[80px] rounded-full pointer-events-none`}></div>
 
             <div className="flex flex-col md:flex-row items-start md:items-center gap-8 relative z-10">
@@ -304,7 +320,7 @@ export default function Profile() {
 
             <AnimatePresence>
               {isEditing && isMyProfile && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-8 pt-6 border-t border-white/10 space-y-4">
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="mt-8 pt-6 border-t border-white/10 space-y-4 relative z-10">
                   <h3 className={`text-xs font-bold ${theme.text} uppercase tracking-wider`}>Profili Kişiselleştir</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -322,7 +338,7 @@ export default function Profile() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </SpotlightCard>
 
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -333,15 +349,15 @@ export default function Profile() {
 
           <div className="space-y-6 pb-20">
             {posts.length > 0 && visiblePosts.length === 0 ? (
-              <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-12 text-center text-gray-400">
-                <Lock className="w-12 h-12 mx-auto mb-4 text-gray-500 opacity-60" />
-                <p className="text-sm font-bold text-gray-200">Kullanıcının paylaşımları sadece bağlantılarına açıktır.</p>
-              </div>
+              <SpotlightCard className="p-12 text-center text-gray-400" enableTilt={false}>
+                <Lock className="w-12 h-12 mx-auto mb-4 text-gray-500 opacity-60 relative z-10" />
+                <p className="text-sm font-bold text-gray-200 relative z-10">Kullanıcının paylaşımları sadece bağlantılarına açıktır.</p>
+              </SpotlightCard>
             ) : visiblePosts.length === 0 ? (
-              <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-12 text-center text-gray-400">
-                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-500 opacity-60" />
-                <p className="text-sm font-bold text-gray-200">Bu profilde henüz bir paylaşım yok.</p>
-              </div>
+              <SpotlightCard className="p-12 text-center text-gray-400" enableTilt={false}>
+                <FileText className="w-12 h-12 mx-auto mb-4 text-gray-500 opacity-60 relative z-10" />
+                <p className="text-sm font-bold text-gray-200 relative z-10">Bu profilde henüz bir paylaşım yok.</p>
+              </SpotlightCard>
             ) : (
               visiblePosts.map((post) => {
                 const isOwner = post.user_id === currentUserId;
@@ -350,99 +366,101 @@ export default function Profile() {
                 const isCommentsOpen = expandedComments[post.id];
 
                 return (
-                  <div key={post.id} className={`bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl transition-all ${theme.borderHover} relative group`}>
-                    {canDelete && (
-                      <button onClick={() => handleDeletePost(post.id)} className="absolute top-6 right-6 p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold" title="Sil">
-                        <Trash2 className="w-4 h-4" /> Sil
-                      </button>
-                    )}
+                  <SpotlightCard key={post.id} className="p-6 shadow-xl transition-all group" particleCount={10} enableTilt={false}>
+                    <div className="relative z-10">
+                      {canDelete && (
+                        <button onClick={() => handleDeletePost(post.id)} className="absolute top-0 right-0 p-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold" title="Sil">
+                          <Trash2 className="w-4 h-4" /> Sil
+                        </button>
+                      )}
 
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-2xl bg-white/5 overflow-hidden border border-white/10 flex-shrink-0">
-                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-sm font-bold text-white">{profile.full_name || 'Mühendis'}</h4>
-                          <span className="text-gray-500" title={post.visibility === 'everyone' ? 'Herkes Görebilir' : 'Sadece Bağlantılar'}>
-                            {(!post.visibility || post.visibility === 'everyone') ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-500" />}
-                          </span>
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/5 overflow-hidden border border-white/10 flex-shrink-0">
+                          <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                         </div>
-                        <p className="text-[11px] text-gray-400 font-semibold">{new Date(post.created_at).toLocaleDateString('tr-TR')} • {profile.class_level || 'Öğrenci'}</p>
-                      </div>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-white mb-2 pr-16">{post.title}</h3>
-                    <p className="text-sm text-gray-200 font-medium leading-relaxed mb-4">{post.content || 'Açıklama belirtilmemiş.'}</p>
-
-                    {post.file_url && (
-                      <div className="mt-4 mb-4">
-                        {isImageFile(post.file_url) ? (
-                          <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 max-h-[450px] flex items-center justify-center">
-                            <img src={post.file_url} alt="Paylaşım Görseli" className="w-full object-cover max-h-[450px]" />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-white">{profile.full_name || 'Mühendis'}</h4>
+                            <span className="text-gray-500" title={post.visibility === 'everyone' ? 'Herkes Görebilir' : 'Sadece Bağlantılar'}>
+                              {(!post.visibility || post.visibility === 'everyone') ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5 text-amber-500" />}
+                            </span>
                           </div>
-                        ) : (
-                          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
-                            <span className={`text-xs ${theme.text} font-bold flex items-center gap-2`}><FileText className="w-4 h-4" /> Ekli Doküman</span>
-                            <a href={post.file_url} target="_blank" rel="noreferrer" className={`px-4 py-2 rounded-xl ${theme.bgLight} border ${theme.border} ${theme.text} hover:${theme.bg} hover:text-black text-xs font-bold transition-all flex items-center gap-1.5`}>Görüntüle <ArrowRight className="w-3.5 h-3.5" /></a>
-                          </div>
-                        )}
+                          <p className="text-[11px] text-gray-400 font-semibold">{new Date(post.created_at).toLocaleDateString('tr-TR')} • {profile.class_level || 'Öğrenci'}</p>
+                        </div>
                       </div>
-                    )}
 
-                    <div className="flex items-center gap-2 pt-4 border-t border-white/10">
-                      <button 
-                        onClick={() => handleToggleLike(post)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${hasLiked ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-transparent'}`}
-                      >
-                        <Heart className={`w-4 h-4 ${hasLiked ? 'fill-red-400' : ''}`} /> {post.post_likes?.length || 0}
-                      </button>
-                      <button 
-                        onClick={() => setExpandedComments(prev => ({...prev, [post.id]: !prev[post.id]}))}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 text-xs font-bold transition-all cursor-pointer"
-                      >
-                        <MessageCircle className="w-4 h-4" /> {post.post_comments?.length || 0} Yorum
-                      </button>
-                    </div>
+                      <h3 className="text-lg font-bold text-white mb-2 pr-16">{post.title}</h3>
+                      <p className="text-sm text-gray-200 font-medium leading-relaxed mb-4">{post.content || 'Açıklama belirtilmemiş.'}</p>
 
-                    {isCommentsOpen && (
-                      <div className="mt-4 pt-4 border-t border-white/5 space-y-4">
-                        
-                        <div className="space-y-3">
-                          {post.post_comments?.map(comment => (
-                            <div key={comment.id} className="flex gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 group/comment relative">
-                              <img src={comment.profiles?.avatar_url} alt="Av" className="w-8 h-8 rounded-xl object-cover border border-white/10" />
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-xs font-bold text-white">{comment.profiles?.full_name}</span>
-                                  <span className="text-[10px] text-gray-500">{new Date(comment.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
-                                </div>
-                                <p className="text-xs text-gray-300 font-medium">{comment.content}</p>
-                              </div>
-                              {comment.user_id === currentUserId && (
-                                <button onClick={() => handleDeleteComment(post.id, comment.id)} className="absolute top-3 right-3 opacity-0 group-hover/comment:opacity-100 text-red-400 hover:text-red-500 transition-opacity cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                      {post.file_url && (
+                        <div className="mt-4 mb-4">
+                          {isImageFile(post.file_url) ? (
+                            <div className="rounded-2xl overflow-hidden border border-white/10 bg-black/40 max-h-[450px] flex items-center justify-center">
+                              <img src={post.file_url} alt="Paylaşım Görseli" className="w-full object-cover max-h-[450px]" />
                             </div>
-                          ))}
+                          ) : (
+                            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between">
+                              <span className={`text-xs ${theme.text} font-bold flex items-center gap-2`}><FileText className="w-4 h-4" /> Ekli Doküman</span>
+                              <a href={post.file_url} target="_blank" rel="noreferrer" className={`px-4 py-2 rounded-xl ${theme.bgLight} border ${theme.border} ${theme.text} hover:${theme.bg} hover:text-black text-xs font-bold transition-all flex items-center gap-1.5`}>Görüntüle <ArrowRight className="w-3.5 h-3.5" /></a>
+                            </div>
+                          )}
                         </div>
+                      )}
 
-                        <form onSubmit={(e) => handleAddComment(e, post)} className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={commentInputs[post.id] || ''}
-                            onChange={(e) => setCommentInputs(prev => ({...prev, [post.id]: e.target.value}))}
-                            placeholder="Bir yorum ekle... (Puan kazandırır)"
-                            className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-white/30"
-                          />
-                          <button type="submit" disabled={!commentInputs[post.id]?.trim()} className={`px-4 rounded-xl ${theme.bg} text-black transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center opacity-90 hover:opacity-100`}>
-                            <Send className="w-4 h-4 ml-0.5" />
-                          </button>
-                        </form>
+                      <div className="flex items-center gap-2 pt-4 border-t border-white/10">
+                        <button 
+                          onClick={() => handleToggleLike(post)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${hasLiked ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-transparent'}`}
+                        >
+                          <Heart className={`w-4 h-4 ${hasLiked ? 'fill-red-400' : ''}`} /> {post.post_likes?.length || 0}
+                        </button>
+                        <button 
+                          onClick={() => setExpandedComments(prev => ({...prev, [post.id]: !prev[post.id]}))}
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 text-xs font-bold transition-all cursor-pointer"
+                        >
+                          <MessageCircle className="w-4 h-4" /> {post.post_comments?.length || 0} Yorum
+                        </button>
                       </div>
-                    )}
-                  </div>
+
+                      {isCommentsOpen && (
+                        <div className="mt-4 pt-4 border-t border-white/5 space-y-4">
+                          
+                          <div className="space-y-3">
+                            {post.post_comments?.map(comment => (
+                              <div key={comment.id} className="flex gap-3 bg-black/20 p-3 rounded-2xl border border-white/5 group/comment relative">
+                                <img src={comment.profiles?.avatar_url} alt="Av" className="w-8 h-8 rounded-xl object-cover border border-white/10" />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs font-bold text-white">{comment.profiles?.full_name}</span>
+                                    <span className="text-[10px] text-gray-500">{new Date(comment.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-300 font-medium">{comment.content}</p>
+                                </div>
+                                {comment.user_id === currentUserId && (
+                                  <button onClick={() => handleDeleteComment(post.id, comment.id)} className="absolute top-3 right-3 opacity-0 group-hover/comment:opacity-100 text-red-400 hover:text-red-500 transition-opacity cursor-pointer">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          <form onSubmit={(e) => handleAddComment(e, post)} className="flex gap-2">
+                            <input 
+                              type="text" 
+                              value={commentInputs[post.id] || ''}
+                              onChange={(e) => setCommentInputs(prev => ({...prev, [post.id]: e.target.value}))}
+                              placeholder="Bir yorum ekle... (Puan kazandırır)"
+                              className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-white/30"
+                            />
+                            <button type="submit" disabled={!commentInputs[post.id]?.trim()} className={`px-4 rounded-xl ${theme.bg} text-black transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center opacity-90 hover:opacity-100`}>
+                              <Send className="w-4 h-4 ml-0.5" />
+                            </button>
+                          </form>
+                        </div>
+                      )}
+                    </div>
+                  </SpotlightCard>
                 );
               })
             )}
@@ -450,12 +468,12 @@ export default function Profile() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl">
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Users className={`w-4 h-4 ${theme.text}`} /> Bağlantılar ({connections.length})</h3>
+          <SpotlightCard className="p-6 shadow-xl" particleCount={5} enableTilt={false}>
+            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2 relative z-10"><Users className={`w-4 h-4 ${theme.text}`} /> Bağlantılar ({connections.length})</h3>
             {connections.length === 0 ? (
-              <p className="text-xs text-gray-400 font-bold">Bağlantınız bulunmuyor.</p>
+              <p className="text-xs text-gray-400 font-bold relative z-10">Bağlantınız bulunmuyor.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 relative z-10">
                 {connections.map((friend) => (
                   <div key={friend.id} onClick={() => window.location.href = `/profile?id=${friend.id}`} className={`p-3 rounded-2xl bg-black/40 border border-white/10 flex items-center gap-3 ${theme.borderHover} transition-all cursor-pointer group`}>
                     <img src={friend.avatar_url} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-white/10" />
@@ -467,7 +485,7 @@ export default function Profile() {
                 ))}
               </div>
             )}
-          </div>
+          </SpotlightCard>
         </div>
 
       </div>

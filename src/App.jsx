@@ -6,6 +6,7 @@ import {
   Calculator as CalculatorIcon, Crown, MonitorPlay 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { gsap } from 'gsap'; // GSAP eklendi
 import { supabase } from './supabase';
 
 import Landing from './pages/Landing';
@@ -31,12 +32,82 @@ export const themeConfig = {
   purple: { id: 'purple', name: 'Ametist Moru', text: 'text-purple-400', text500: 'text-purple-500', bg: 'bg-purple-500', bgLight: 'bg-purple-500/10', bgActive: 'bg-purple-500/15', border: 'border-purple-500/30', borderHover: 'hover:border-purple-500/40', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.2)]', glowStrong: 'shadow-[0_0_20px_rgba(168,85,247,0.4)]', fill: 'fill-purple-500', selectionBg: 'selection:bg-purple-500/30', hex: '#a855f7' }
 };
 
+// --- YENİ EKLENEN GSAP ANİMASYONLU MENÜ BUTONU (PILL ITEM) ---
+function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger = false }) {
+  const circleRef = useRef(null);
+  const iconNormalRef = useRef(null);
+  const iconHoverRef = useRef(null);
+  const tlRef = useRef(null);
+
+  useEffect(() => {
+    const circle = circleRef.current;
+    const iconNormal = iconNormalRef.current;
+    const iconHover = iconHoverRef.current;
+
+    // Animasyon Başlangıç Durumları
+    gsap.set(circle, { scale: 0, xPercent: -50, yPercent: -50, left: "50%", top: "100%" });
+    gsap.set(iconNormal, { y: 0, opacity: 1 });
+    gsap.set(iconHover, { y: 40, opacity: 0 });
+
+    // Timeline Oluşturma
+    const tl = gsap.timeline({ paused: true });
+    
+    tl.to(circle, { scale: 3, duration: 0.35, ease: "power2.out" }, 0);
+    tl.to(iconNormal, { y: -40, opacity: 0, duration: 0.25, ease: "power2.out" }, 0);
+    tl.to(iconHover, { y: 0, opacity: 1, duration: 0.25, ease: "power2.out" }, 0);
+
+    tlRef.current = tl;
+
+    return () => tl.kill();
+  }, []);
+
+  const handleEnter = () => tlRef.current?.play();
+  const handleLeave = () => tlRef.current?.reverse();
+
+  const content = (
+    <div 
+      className={`relative w-12 h-12 flex items-center justify-center rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 ${isActive ? `${theme.bgLight} ${theme.border} ${theme.glow}` : 'hover:bg-white/[0.02]'}`}
+      onMouseEnter={handleEnter}
+      onMouseLeave={handleLeave}
+      onClick={onClick}
+      title={title}
+    >
+      <span 
+        ref={circleRef} 
+        className="absolute rounded-full w-12 h-12 pointer-events-none z-0" 
+        style={{ backgroundColor: isDanger ? '#ef4444' : theme.hex }}
+      ></span>
+      
+      {/* Normal Durumdaki İkon */}
+      <div ref={iconNormalRef} className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <Icon className={`w-6 h-6 ${isActive ? theme.text : isDanger ? 'text-red-400' : 'text-gray-500'}`} />
+      </div>
+      
+      {/* Hover Durumunda Alttan Gelen Siyah (veya beyaz) İkon */}
+      <div ref={iconHoverRef} className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <Icon className={`w-6 h-6 ${isDanger ? 'text-white' : 'text-[#121212]'}`} />
+      </div>
+    </div>
+  );
+
+  if (to) {
+    return <Link to={to} className="block">{content}</Link>;
+  }
+  return content;
+}
+
 function SidebarNav({ isAdmin }) {
   const { theme } = useContext(ThemeContext);
   const location = useLocation();
   const currentPath = location.pathname;
   const [showHub, setShowHub] = useState(false);
   const hubRef = useRef(null);
+  const logoRef = useRef(null);
+
+  // Logo Spin Animasyonu
+  const handleLogoEnter = () => {
+    gsap.fromTo(logoRef.current, { rotate: 0 }, { rotate: 360, duration: 0.5, ease: "power3.out", overwrite: "auto" });
+  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -47,47 +118,57 @@ function SidebarNav({ isAdmin }) {
   }, []);
 
   return (
-    <nav className="w-20 border-r border-white/5 flex flex-col items-center py-8 justify-between backdrop-blur-xl bg-black/40 z-50 relative flex-shrink-0 h-screen sticky top-0 font-sans">
+    <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 justify-between backdrop-blur-xl bg-[#0a0a0a]/80 z-50 relative flex-shrink-0 h-screen sticky top-0 font-sans shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
       
-      <div className="flex flex-col items-center gap-4 w-full">
-        <div className={`w-10 h-10 rounded-xl ${theme.bg} flex items-center justify-center font-bold text-black mb-4 ${theme.glowStrong} transition-colors`}>
+      <div className="flex flex-col items-center gap-5 w-full">
+        {/* LOGO */}
+        <div 
+          ref={logoRef}
+          onMouseEnter={handleLogoEnter}
+          className={`w-12 h-12 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl mb-6 cursor-pointer ${theme.glowStrong}`}
+        >
           M
         </div>
         
-        <Link to="/" className={`p-3 rounded-2xl transition-all ${currentPath === '/' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Ana Panel"><Home className="w-6 h-6" /></Link>
-        <Link to="/courses" className={`p-3 rounded-2xl transition-all ${currentPath === '/courses' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Ders Notları"><BookOpen className="w-6 h-6" /></Link>
-        <Link to="/lobby" className={`p-3 rounded-2xl transition-all ${currentPath === '/lobby' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Ortak Lobi"><MessageSquare className="w-6 h-6" /></Link>
-        <Link to="/profile" className={`p-3 rounded-2xl transition-all ${currentPath === '/profile' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Profilim"><User className="w-6 h-6" /></Link>
+        {/* MENÜ LİNKLERİ (PILL NAV EFEKTİYLE) */}
+        <PillNavItem to="/" icon={Home} isActive={currentPath === '/'} theme={theme} title="Ana Panel" />
+        <PillNavItem to="/courses" icon={BookOpen} isActive={currentPath === '/courses'} theme={theme} title="Ders Notları" />
+        <PillNavItem to="/lobby" icon={MessageSquare} isActive={currentPath === '/lobby'} theme={theme} title="Ortak Lobi" />
+        <PillNavItem to="/profile" icon={User} isActive={currentPath === '/profile'} theme={theme} title="Profilim" />
 
         {/* SİSTEM ARAÇLARI HUB */}
         <div className="relative mt-2" ref={hubRef}>
-          <button onClick={() => setShowHub(!showHub)} className={`p-3 rounded-2xl transition-all ${showHub || currentPath === '/calculator' || currentPath === '/chess' || currentPath === '/private-rooms' || currentPath === '/admin' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Sistem Araçları">
-            <LayoutGrid className="w-6 h-6" />
-          </button>
+          <PillNavItem 
+            icon={LayoutGrid} 
+            onClick={() => setShowHub(!showHub)}
+            isActive={showHub || currentPath === '/calculator' || currentPath === '/chess' || currentPath === '/private-rooms' || currentPath === '/admin'} 
+            theme={theme} 
+            title="Sistem Araçları" 
+          />
 
           <AnimatePresence>
             {showHub && (
-              <motion.div initial={{ opacity: 0, x: -10, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute left-[calc(100%+1rem)] top-1/2 -translate-y-1/2 w-56 bg-[#121212] border border-white/10 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 backdrop-blur-xl">
+              <motion.div initial={{ opacity: 0, x: -10, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute left-[calc(100%+1.5rem)] top-1/2 -translate-y-1/2 w-64 bg-[#121212] border border-white/10 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 backdrop-blur-xl">
                 <div className="px-3 py-2 mb-1 border-b border-white/5"><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sistem Araçları</p></div>
                 
                 <Link to="/private-rooms" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/private-rooms' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <MonitorPlay className="w-4 h-4" />
+                  <MonitorPlay className="w-5 h-5" />
                   <span className="text-sm font-bold">Özel Odalar</span>
                 </Link>
 
                 <Link to="/calculator" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/calculator' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <CalculatorIcon className="w-4 h-4" />
+                  <CalculatorIcon className="w-5 h-5" />
                   <span className="text-sm font-bold">Not Hesaplayıcı</span>
                 </Link>
                 
                 <Link to="/chess" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/chess' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <Crown className="w-4 h-4" />
+                  <Crown className="w-5 h-5" />
                   <span className="text-sm font-bold">Satranç Kulübü</span>
                 </Link>
                 
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all mt-1 ${currentPath === '/admin' ? `bg-amber-500/20 text-amber-400` : 'text-amber-500/70 hover:bg-amber-500/10 hover:text-amber-400'}`}>
-                    <ShieldAlert className="w-4 h-4" />
+                    <ShieldAlert className="w-5 h-5" />
                     <span className="text-sm font-bold">Yönetici Paneli</span>
                   </Link>
                 )}
@@ -97,13 +178,9 @@ function SidebarNav({ isAdmin }) {
         </div>
       </div>
       
-      <div className="flex flex-col gap-4 items-center">
-        <Link to="/settings" className={`p-3 rounded-2xl transition-all ${currentPath === '/settings' ? `${theme.bgActive} ${theme.border} ${theme.text} ${theme.glow}` : 'text-gray-500 hover:text-gray-300'}`} title="Ayarlar">
-          <SettingsIcon className="w-6 h-6" />
-        </Link>
-        <button onClick={async () => await supabase.auth.signOut()} className="p-3 text-gray-500 hover:text-red-400 transition-colors rounded-2xl cursor-pointer" title="Çıkış Yap">
-          <LogOut className="w-6 h-6" />
-        </button>
+      <div className="flex flex-col gap-5 items-center w-full">
+        <PillNavItem to="/settings" icon={SettingsIcon} isActive={currentPath === '/settings'} theme={theme} title="Ayarlar" />
+        <PillNavItem onClick={async () => await supabase.auth.signOut()} icon={LogOut} theme={theme} title="Çıkış Yap" isDanger={true} />
       </div>
     </nav>
   );
@@ -213,9 +290,10 @@ function AppContent() {
             <motion.div animate={{ rotate: -360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }} className="absolute -bottom-32 -right-32 text-white opacity-[0.02]"><Cpu className="w-[600px] h-[600px]" strokeWidth={0.5} /></motion.div>
           </div>
           
+          {/* YENİ GSAP ANİMASYONLU SIDEBAR */}
           <SidebarNav isAdmin={isAdmin} />
 
-          <div className="flex-1 relative z-10 overflow-y-auto h-screen">
+          <div className="flex-1 relative z-10 overflow-y-auto h-screen custom-scrollbar">
             <Routes>
               <Route path="/" element={<Dashboard totalSeconds={studySeconds} />} />
               <Route path="/courses" element={<Courses />} />

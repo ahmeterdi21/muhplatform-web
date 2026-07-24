@@ -2,6 +2,9 @@ import { useState, useContext, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Calculator as CalcIcon, AlertTriangle, CheckCircle2, XCircle, Info, Plus, Target, Book, Trash2, ChevronRight } from 'lucide-react';
 import { ThemeContext } from '../App';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
+import ElasticSlider from '../components/ElasticSlider';
 
 export default function Calculator() {
   const { theme } = useContext(ThemeContext);
@@ -39,7 +42,6 @@ export default function Calculator() {
     localStorage.setItem('muehplattmon_grades', JSON.stringify(savedCourses));
   }, [savedCourses]);
 
-  // Final Hedefi Hesaplama Formülü (Hedef 50)
   const calculateTargetFinal = (v) => {
     const target = (50 - (v * 0.4)) / 0.6;
     if (target > 100) return 'imkansiz';
@@ -89,7 +91,20 @@ export default function Calculator() {
 
   return (
     <div className="flex-1 p-6 md:p-10 relative overflow-y-auto font-sans min-h-screen">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+      
+      {/* EVRENSEL UZAY/YILDIZ ARKA PLANI */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]} 
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
 
       <header className="mb-10 relative z-10">
         <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -114,32 +129,46 @@ export default function Calculator() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl relative overflow-hidden group">
+              
+              {/* VİZE KARTI */}
+              <SpotlightCard className="p-6 shadow-xl relative overflow-hidden group" particleCount={10} enableTilt={false}>
                 <div className={`absolute top-0 right-0 w-32 h-32 ${theme.bgLight} blur-[50px] rounded-full pointer-events-none opacity-30`}></div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-2 relative z-10">
                   <h3 className="text-lg font-bold text-white tracking-widest">VİZE <span className="text-gray-500 text-xs">(%40)</span></h3>
                   <span className={`text-4xl font-black ${theme.text}`}>{vize}</span>
                 </div>
-                <div className="relative w-full h-3 bg-black/50 rounded-full border border-white/10 overflow-hidden">
-                  <motion.div className={`absolute top-0 left-0 h-full ${theme.bg}`} initial={{ width: 0 }} animate={{ width: `${vize}%` }} transition={{ type: "spring", stiffness: 300, damping: 30 }} />
-                  <input type="range" min="0" max="100" value={vize} onChange={(e) => setVize(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                {/* YENİ ELASTİK KAYDIRICI ENTEGRASYONU */}
+                <div className="relative z-10">
+                  <ElasticSlider 
+                    value={vize} 
+                    onChange={setVize} 
+                    maxValue={100} 
+                    activeColor={theme.hex} 
+                  />
                 </div>
-              </div>
+              </SpotlightCard>
 
-              <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-md shadow-xl relative overflow-hidden group">
+              {/* FİNAL KARTI */}
+              <SpotlightCard className="p-6 shadow-xl relative overflow-hidden group" particleCount={10} enableTilt={false}>
                 <div className={`absolute top-0 right-0 w-32 h-32 ${final < 50 ? 'bg-red-500/10' : theme.bgLight} blur-[50px] rounded-full pointer-events-none opacity-30 transition-colors`}></div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-2 relative z-10">
                   <h3 className="text-lg font-bold text-white tracking-widest">FİNAL <span className="text-gray-500 text-xs">(%60)</span></h3>
                   <span className={`text-4xl font-black ${final < 50 ? 'text-red-400' : theme.text} transition-colors`}>{final}</span>
                 </div>
-                <div className="relative w-full h-3 bg-black/50 rounded-full border border-white/10 overflow-hidden">
-                  <motion.div className={`absolute top-0 left-0 h-full ${final < 50 ? 'bg-red-500' : theme.bg} transition-colors`} initial={{ width: 0 }} animate={{ width: `${final}%` }} transition={{ type: "spring", stiffness: 300, damping: 30 }} />
-                  <input type="range" min="0" max="100" value={final} onChange={(e) => setFinal(Number(e.target.value))} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                {/* YENİ ELASTİK KAYDIRICI ENTEGRASYONU */}
+                <div className="relative z-10">
+                  <ElasticSlider 
+                    value={final} 
+                    onChange={setFinal} 
+                    maxValue={100} 
+                    activeColor={final < 50 ? '#ef4444' : theme.hex} // Final 50'den düşükse kırmızı olur
+                  />
                 </div>
-              </div>
+              </SpotlightCard>
             </div>
 
-            <div className={`h-full bg-white/[0.02] border ${status === 'pass' ? theme.border : 'border-red-500/30'} rounded-3xl p-8 backdrop-blur-xl shadow-2xl flex flex-col justify-center items-center text-center transition-all duration-500 relative overflow-hidden`}>
+            {/* SONUÇ KARTI */}
+            <SpotlightCard className={`h-full border ${status === 'pass' ? theme.border : 'border-red-500/30'} p-8 shadow-2xl flex flex-col justify-center items-center text-center transition-all duration-500 overflow-hidden`} particleCount={20} enableTilt={false}>
               <div className={`absolute inset-0 ${status === 'pass' ? theme.bgLight : 'bg-red-500/10'} blur-[100px] opacity-40 pointer-events-none`}></div>
               <p className="text-gray-400 text-xs font-bold tracking-[0.2em] uppercase mb-2 relative z-10">Dönem Sonu Ortalaması</p>
               <motion.div key={average} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative z-10">
@@ -150,7 +179,7 @@ export default function Calculator() {
                 {status === 'fail_limit' && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-black"><XCircle className="w-4 h-4" /></div><div className="text-left"><h4 className="text-red-400 font-bold text-sm">Kaldınız (Final Barajı)</h4></div></div>}
                 {status === 'fail_avg' && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center text-black"><AlertTriangle className="w-4 h-4" /></div><div className="text-left"><h4 className="text-red-400 font-bold text-sm">Kaldınız (Ortalama Altı)</h4></div></div>}
               </div>
-            </div>
+            </SpotlightCard>
           </div>
         </section>
 
@@ -164,35 +193,37 @@ export default function Calculator() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Yeni Ders Ekleme Formu */}
-            <form onSubmit={handleAddCourse} className="lg:col-span-1 bg-black/40 border border-white/10 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <Book className={`w-5 h-5 ${theme.text}`} />
-                  <h3 className="text-base font-bold text-white">Yeni Ders Hedefi Ekle</h3>
+            <SpotlightCard className="lg:col-span-1 p-6 shadow-xl flex flex-col justify-between" particleCount={5} enableTilt={false}>
+              <form onSubmit={handleAddCourse} className="relative z-10 flex flex-col h-full">
+                <div>
+                  <div className="flex items-center gap-2 mb-6">
+                    <Book className={`w-5 h-5 ${theme.text}`} />
+                    <h3 className="text-base font-bold text-white">Yeni Ders Hedefi Ekle</h3>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Dersin Adı</label>
+                      <input type="text" required value={newCourseName} onChange={(e) => setNewCourseName(e.target.value)} placeholder="Örn: Termodinamik" className="w-full bg-black/60 border border-white/10 rounded-xl py-3 px-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Vize Notun</label>
+                      <input type="number" required min="0" max="100" value={newCourseVize} onChange={(e) => setNewCourseVize(e.target.value)} placeholder="Aldığın Not (Örn: 45)" className="w-full bg-black/60 border border-white/10 rounded-xl py-3 px-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all" />
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Dersin Adı</label>
-                    <input type="text" required value={newCourseName} onChange={(e) => setNewCourseName(e.target.value)} placeholder="Örn: Termodinamik" className="w-full bg-black/60 border border-white/10 rounded-xl py-3 px-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 font-bold mb-1.5 uppercase tracking-wider">Vize Notun</label>
-                    <input type="number" required min="0" max="100" value={newCourseVize} onChange={(e) => setNewCourseVize(e.target.value)} placeholder="Aldığın Not (Örn: 45)" className="w-full bg-black/60 border border-white/10 rounded-xl py-3 px-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all" />
-                  </div>
-                </div>
-              </div>
-              
-              <button type="submit" className={`mt-6 w-full py-3.5 rounded-xl ${theme.bg} text-black font-bold text-sm transition-all flex items-center justify-center gap-2 ${theme.glowStrong} hover:opacity-90 cursor-pointer`}>
-                <Plus className="w-4 h-4 stroke-[3]" /> Kaydet ve Hedef Belirle
-              </button>
-            </form>
+                <button type="submit" className={`mt-6 w-full py-3.5 rounded-xl ${theme.bg} text-black font-bold text-sm transition-all flex items-center justify-center gap-2 ${theme.glowStrong} hover:opacity-90 cursor-pointer`}>
+                  <Plus className="w-4 h-4 stroke-[3]" /> Kaydet ve Hedef Belirle
+                </button>
+              </form>
+            </SpotlightCard>
 
             {/* Kayıtlı Dersler Listesi */}
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-max">
               <AnimatePresence>
                 {savedCourses.length === 0 ? (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="sm:col-span-2 py-12 flex flex-col items-center justify-center text-gray-500 bg-white/[0.02] border border-white/5 rounded-3xl">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="sm:col-span-2 py-12 flex flex-col items-center justify-center text-gray-500 bg-white/[0.02] border border-white/5 rounded-3xl backdrop-blur-md">
                     <Target className="w-10 h-10 mb-3 opacity-50" />
                     <p className="font-bold text-sm">Henüz bir ders eklemedin.</p>
                   </motion.div>
@@ -201,9 +232,9 @@ export default function Calculator() {
                     const statusInfo = getCourseStatus(course.vize, course.final);
                     
                     return (
-                      <motion.div key={course.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} layout className={`bg-white/[0.03] border ${course.final !== '' ? (statusInfo.state === 'pass' ? theme.border : 'border-red-500/30') : 'border-white/10'} rounded-3xl p-5 shadow-lg relative flex flex-col transition-colors`}>
+                      <motion.div key={course.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} layout className={`bg-white/[0.03] border ${course.final !== '' ? (statusInfo.state === 'pass' ? theme.border : 'border-red-500/30') : 'border-white/10'} rounded-3xl p-5 shadow-lg relative flex flex-col transition-colors backdrop-blur-md`}>
                         
-                        {/* KONFETİ EFEKTİ VE ROZET (SADECE GEÇTİĞİNDE ÇIKAR) */}
+                        {/* KONFETİ EFEKTİ VE ROZET */}
                         <AnimatePresence>
                           {statusInfo.state === 'pass' && (
                             <>
@@ -214,19 +245,6 @@ export default function Calculator() {
                               >
                                 🎉 GEÇTİN
                               </motion.div>
-                              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl z-10">
-                                {[...Array(6)].map((_, i) => (
-                                  <motion.span
-                                    key={i}
-                                    initial={{ opacity: 1, y: 50, x: 0, scale: 0 }}
-                                    animate={{ opacity: 0, y: -80, x: (Math.random() - 0.5) * 80, scale: Math.random() * 1.5 + 0.5, rotate: Math.random() * 360 }}
-                                    transition={{ duration: 1.5, ease: "easeOut" }}
-                                    className="absolute bottom-4 left-1/2 text-2xl"
-                                  >
-                                    🎉
-                                  </motion.span>
-                                ))}
-                              </div>
                             </>
                           )}
                         </AnimatePresence>
@@ -255,7 +273,6 @@ export default function Calculator() {
                         <div className="mt-auto relative z-20">
                           {course.final === '' ? (
                             <div className="flex gap-2">
-                              {/* YENİ GÜVENLİ İNPUT MANTIĞI: onChange kaldırıldı, onay butonu eklendi */}
                               <input 
                                 id={`final-input-${course.id}`}
                                 type="number" min="0" max="100" 

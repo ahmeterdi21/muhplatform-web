@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useContext } from 'react';
 import { Send, MessageSquare, Paperclip, ShieldAlert, Trash2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { ThemeContext } from '../App';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 export default function Lobby() {
   const { theme } = useContext(ThemeContext);
@@ -59,8 +61,8 @@ export default function Lobby() {
   };
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [messages]); // (veya roomMessages)
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -119,7 +121,6 @@ export default function Lobby() {
     return Boolean(url.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif|svg)$/));
   };
 
-  // Seviye Balonlukları (Ana renk seçilen temaya göre, yüksek seviyeler oyun mekaniği gereği sabittir)
   const getBubbleStyle = (score = 0, isMe) => {
     if (score >= 50) return isMe ? 'bg-purple-500/10 border-purple-500/30 rounded-tr-none' : 'bg-white/[0.03] border-purple-500/30 rounded-tl-none';
     if (score >= 30) return isMe ? 'bg-blue-500/10 border-blue-500/30 rounded-tr-none' : 'bg-white/[0.03] border-blue-500/30 rounded-tl-none';
@@ -130,9 +131,27 @@ export default function Lobby() {
   return (
     <div className="flex-1 flex flex-col h-screen p-6 md:p-10 font-sans relative overflow-hidden">
       
-      <div className="flex-1 flex flex-col bg-white/[0.02] border border-white/10 rounded-3xl backdrop-blur-md shadow-2xl relative z-10 overflow-hidden">
-        
-        <header className="flex items-center justify-between p-6 border-b border-white/10 bg-white/[0.01]">
+      {/* EVRENSEL UZAY/YILDIZ ARKA PLANI */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]}
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
+      
+      {/* LOBİ PANELİ SPOTLIGHT KARTINA ÇEVRİLDİ */}
+      <SpotlightCard 
+        className="flex-1 flex flex-col shadow-2xl relative z-10 overflow-hidden"
+        particleCount={20}
+        enableTilt={false}
+      >
+        <header className="flex items-center justify-between p-6 border-b border-white/10 bg-white/[0.01] relative z-10">
           <div className="flex items-center gap-3">
             <div className={`w-12 h-12 rounded-2xl ${theme.bgLight} ${theme.border} flex items-center justify-center ${theme.text} ${theme.glow}`}>
               <MessageSquare className="w-6 h-6" />
@@ -147,7 +166,7 @@ export default function Lobby() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto space-y-5 p-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto space-y-5 p-6 custom-scrollbar relative z-10">
           {messages.map((msg) => {
             const sender = profilesMap[msg.sender_id] || { full_name: 'Bilinmeyen Kullanıcı', avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown', class_level: 'Öğrenci', score: 0, is_admin: false };
             const isMe = msg.sender_id === currentUser?.id;
@@ -219,7 +238,7 @@ export default function Lobby() {
           <div ref={chatEndRef} />
         </div>
 
-        <form onSubmit={handleSendMessage} className="p-6 border-t border-white/10 flex gap-3 relative bg-black/20">
+        <form onSubmit={handleSendMessage} className="p-6 border-t border-white/10 flex gap-3 relative bg-black/20 z-10">
           <input type="file" ref={fileInputRef} hidden accept="image/*,.pdf,.doc,.docx" onChange={handleFileUpload} />
           
           <button 
@@ -251,7 +270,7 @@ export default function Lobby() {
           </div>
         </form>
 
-      </div>
+      </SpotlightCard>
     </div>
   );
 }

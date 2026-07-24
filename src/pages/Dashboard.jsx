@@ -4,6 +4,8 @@ import { BookOpen, Users, ArrowRight, Clock, Search, ExternalLink } from 'lucide
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import { ThemeContext } from '../App';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 export default function Dashboard({ totalSeconds }) {
   const navigate = useNavigate();
@@ -84,6 +86,20 @@ export default function Dashboard({ totalSeconds }) {
   return (
     <div className="flex-1 p-10 overflow-y-auto relative font-sans">
       
+      {/* YENİ UZAY/YILDIZ ARKA PLANI */}
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-70">
+        <Particles
+          particleColors={['#ffffff', theme.hex]} // Yıldızlar beyaz ve seçili tema renginde parlayacak
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
+
       <header className="mb-10 relative z-50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-white">
@@ -138,28 +154,33 @@ export default function Dashboard({ totalSeconds }) {
           </AnimatePresence>
         </div>
 
-        <div className="px-6 py-3 bg-white/[0.04] border border-white/10 rounded-2xl backdrop-blur-md text-xs font-semibold text-gray-200 shadow-lg">
+        <div className="px-6 py-3 bg-white/[0.04] border border-white/10 rounded-2xl backdrop-blur-md text-xs font-semibold text-gray-200 shadow-lg relative z-50">
           Hoş geldin, <span className={`${theme.text} font-bold text-sm ml-1`}>{profile?.full_name || 'Mühendis'}</span>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
         
-        <div className="lg:col-span-2 bg-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-md flex flex-col justify-between shadow-xl">
+        {/* KART 1: Son Eklenen Dersler */}
+        <SpotlightCard 
+          className="lg:col-span-2 p-8 flex flex-col justify-between shadow-xl"
+          particleCount={15}
+          enableTilt={false} 
+        >
           <div>
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white tracking-tight">
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-white tracking-tight relative z-10">
               <BookOpen className={`w-5 h-5 ${theme.text}`} /> Son Eklenen Dersler
             </h2>
 
             <div className="space-y-4">
               {recentCourses.length === 0 ? (
-                <p className="text-xs text-gray-500 font-bold p-4 bg-black/20 rounded-2xl border border-white/5 text-center">Henüz onaylı dosya yok.</p>
+                <p className="text-xs text-gray-500 font-bold p-4 bg-black/20 rounded-2xl border border-white/5 text-center relative z-10">Henüz onaylı dosya yok.</p>
               ) : (
                 recentCourses.map((course) => (
                   <div 
                     key={course.id} 
                     onClick={() => navigate('/courses')}
-                    className={`p-5 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between ${theme.borderHover} hover:bg-white/[0.04] transition-all cursor-pointer group shadow-md`}
+                    className={`p-5 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-between ${theme.borderHover} hover:bg-white/[0.04] transition-all cursor-pointer group shadow-md relative z-10`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-4">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: theme.hex, boxShadow: `0 0 8px ${theme.hex}` }}></div>
@@ -175,7 +196,7 @@ export default function Dashboard({ totalSeconds }) {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+          <div className="mt-8 pt-6 border-t border-white/10 flex justify-end relative z-10">
             <button 
               onClick={() => navigate('/courses')}
               className={`px-7 py-3.5 rounded-2xl bg-white/5 hover:${theme.bg} hover:text-black border border-white/10 ${theme.borderHover} text-sm font-bold transition-all flex items-center gap-2.5 group cursor-pointer shadow-md`}
@@ -184,52 +205,60 @@ export default function Dashboard({ totalSeconds }) {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
-        </div>
+        </SpotlightCard>
 
-        <div className="space-y-8">
+        <div className="space-y-8 flex flex-col">
           
-          <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-md relative overflow-hidden group shadow-xl">
+          {/* KART 2: Aktif Çalışma Süresi */}
+          <SpotlightCard 
+            className="p-8 relative overflow-hidden shadow-xl"
+            particleCount={8}
+          >
             <div className={`absolute top-0 right-0 w-32 h-32 ${theme.bgLight} blur-[50px] rounded-full pointer-events-none`}></div>
             
-            <p className={`text-xs uppercase tracking-widest ${theme.text} font-bold mb-3 flex items-center gap-2`}>
+            <p className={`text-xs uppercase tracking-widest ${theme.text} font-bold mb-3 flex items-center gap-2 relative z-10`}>
               <Clock className="w-4 h-4" /> Aktif Çalışma Süresi
             </p>
-            <div className="flex items-baseline gap-2.5">
+            <div className="flex items-baseline gap-2.5 relative z-10">
               <span className="text-6xl font-bold text-white tracking-tight">
                 {timeData.val}
               </span>
               <span className={`${theme.text} font-bold text-xl`}>{timeData.unit}</span>
             </div>
-            <p className="text-xs text-gray-300 font-semibold mt-4 leading-relaxed">
+            <p className="text-xs text-gray-300 font-semibold mt-4 leading-relaxed relative z-10">
               Platformda geçirdiğin toplam odak süresi anlık olarak kaydediliyor.
             </p>
-          </div>
+          </SpotlightCard>
 
-          <div 
-            onClick={() => navigate('/lobby')} 
-            className={`bg-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-md ${theme.borderHover} hover:bg-white/[0.04] transition-all cursor-pointer group shadow-xl`}
+          {/* KART 3: Lobi Yönlendirmesi */}
+          <SpotlightCard 
+            className="p-8 group shadow-xl flex-1 cursor-pointer"
+            particleCount={10}
+            enableTilt={true}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2.5 leading-snug">
-                <Users className={`w-5 h-5 ${theme.text} flex-shrink-0`} /> Diğer öğrencilerle anlık sohbete katıl
-              </h3>
-              <div className="w-2.5 h-2.5 rounded-full animate-ping flex-shrink-0" style={{ backgroundColor: theme.hex }}></div>
-            </div>
-            <p className="text-xs text-gray-300 font-semibold mb-6 leading-relaxed">
-              Mühendislik kampüsündeki diğer öğrencilerle canlı ortak sohbet odasında anında buluş.
-            </p>
-            
-            <div className="flex items-center justify-between">
-              <div className="flex -space-x-2">
-                <div className={`w-8 h-8 rounded-full ${theme.bgLight} border ${theme.border} flex items-center justify-center text-[10px] ${theme.text} font-bold`}>ME</div>
-                <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-[10px] text-cyan-400 font-bold">AE</div>
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-[10px] text-purple-400 font-bold">+</div>
+            <div onClick={() => navigate('/lobby')} className="w-full h-full flex flex-col relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-bold text-white flex items-center gap-2.5 leading-snug">
+                  <Users className={`w-5 h-5 ${theme.text} flex-shrink-0`} /> Diğer öğrencilerle anlık sohbete katıl
+                </h3>
+                <div className="w-2.5 h-2.5 rounded-full animate-ping flex-shrink-0" style={{ backgroundColor: theme.hex }}></div>
               </div>
-              <span className={`text-xs ${theme.text} group-hover:translate-x-1 transition-transform flex items-center gap-1.5 font-bold`}>
-                Sohbete Git <ArrowRight className="w-4 h-4" />
-              </span>
+              <p className="text-xs text-gray-300 font-semibold mb-6 leading-relaxed">
+                Mühendislik kampüsündeki diğer öğrencilerle canlı ortak sohbet odasında anında buluş.
+              </p>
+              
+              <div className="flex items-center justify-between mt-auto">
+                <div className="flex -space-x-2">
+                  <div className={`w-8 h-8 rounded-full ${theme.bgLight} border ${theme.border} flex items-center justify-center text-[10px] ${theme.text} font-bold`}>ME</div>
+                  <div className="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-[10px] text-cyan-400 font-bold">AE</div>
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-[10px] text-purple-400 font-bold">+</div>
+                </div>
+                <span className={`text-xs ${theme.text} group-hover:translate-x-1 transition-transform flex items-center gap-1.5 font-bold`}>
+                  Sohbete Git <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
             </div>
-          </div>
+          </SpotlightCard>
 
         </div>
       </div>

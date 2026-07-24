@@ -1,0 +1,58 @@
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem; /* 20px */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  /* Değişkenler JS'den gelecek */
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 300px;
+}
+
+.spotlight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Mouse takip eden parlak kenar efekti */
+.spotlight-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px; /* Kenarlık kalınlığı */
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color-rgb), calc(var(--glow-intensity) * 0.8)) 0%,
+    rgba(var(--glow-color-rgb), calc(var(--glow-intensity) * 0.2)) 40%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+}
+.particle::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: rgba(var(--glow-color-rgb), 0.2);
+  border-radius: 50%;
+  z-index: -1;
+}

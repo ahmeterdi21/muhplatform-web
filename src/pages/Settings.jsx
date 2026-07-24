@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useContext } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Upload, Camera, Save, GraduationCap, ShieldCheck, Headset, Paperclip, Send, CheckCircle2, Lock as LockIcon, Palette } from 'lucide-react';
 import { supabase } from '../supabase';
-import { ThemeContext } from '../App'; // Tema bağlantısı içeri aktarıldı
+import { ThemeContext } from '../App'; 
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 const AVATAR_LIBRARY = [
   "https://api.dicebear.com/7.x/bottts/svg?seed=Engineer&baseColor=10b981",
@@ -18,7 +20,6 @@ const AVATAR_LIBRARY = [
 const CLASS_LEVELS = ["Hazırlık", "1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf", "Yüksek Lisans"];
 
 export default function Settings() {
-  // Tema Yöneticisinden veriler çekildi
   const { currentTheme, setCurrentTheme, theme, themeConfig } = useContext(ThemeContext);
 
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,6 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  // Destek Chat ve Oda Durumu State'leri
   const [supportMessage, setSupportMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -58,14 +58,12 @@ export default function Settings() {
           if (profile.avatar_url) setAvatarUrl(profile.avatar_url);
         }
 
-        // Oda durumunu kontrol et
         const { data: roomData } = await supabase.from('support_rooms').select('*').eq('user_id', user.id).single();
         if (roomData) {
           setRoomStatus(roomData.status || 'open');
           setCloseReason(roomData.close_reason || '');
         }
 
-        // Destek Mesajlarını çek
         const { data: chatHistory } = await supabase
           .from('support_messages')
           .select('*')
@@ -231,17 +229,31 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex-1 p-10 relative overflow-y-auto">
+    <div className="flex-1 p-10 relative overflow-y-auto font-sans">
+      
+      {/* EVRENSEL UZAY/YILDIZ ARKA PLANI */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]} 
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
+
       <header className="mb-10 relative z-10">
-        <h1 className="text-4xl font-light tracking-tight">
+        <h1 className="text-4xl font-light tracking-tight text-white">
           Sistem <span className={`font-bold ${theme.text}`}>Ayarları</span>
         </h1>
         <p className="text-gray-400 mt-2">Profilini kişiselleştir, sınıf seviyeni belirle veya admin ekibiyle iletişime geç.</p>
       </header>
 
-      <div className="flex gap-8 relative z-10 max-w-6xl">
-        <div className="w-64 flex flex-col gap-2">
-          {/* Butonlar dinamik tema sınıfını alacak şekilde güncellendi */}
+      <div className="flex flex-col md:flex-row gap-8 relative z-10 max-w-6xl">
+        <div className="w-full md:w-64 flex flex-col gap-2">
           <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-3 p-4 rounded-2xl transition-all cursor-pointer ${activeTab === 'profile' ? `${theme.bgLight} ${theme.text} border ${theme.border}` : 'text-gray-400 hover:bg-white/[0.05]'}`}>
             <User className="w-5 h-5" /> Profil Bilgileri
           </button>
@@ -261,13 +273,16 @@ export default function Settings() {
           </button>
         </div>
 
-        <div className="flex-1 bg-white/[0.02] border border-white/10 rounded-3xl p-8 backdrop-blur-md">
-          
-          {/* YENİ EKLENEN TEMA SEÇİM PANELİ */}
+        {/* ANA PANEL SPOTLIGHT KARTINA ÇEVRİLDİ */}
+        <SpotlightCard 
+          className="flex-1 p-8 shadow-2xl relative z-10" 
+          particleCount={15} 
+          enableTilt={false}
+        >
           {activeTab === 'theme' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 relative z-10">
               <div className="flex flex-col gap-2 mb-6">
-                <h3 className={`text-xl font-semibold flex items-center gap-2`}><Palette className={`w-5 h-5 ${theme.text}`} /> Tema ve Vurgu Rengi</h3>
+                <h3 className={`text-xl font-semibold flex items-center gap-2 text-white`}><Palette className={`w-5 h-5 ${theme.text}`} /> Tema ve Vurgu Rengi</h3>
                 <p className="text-sm text-gray-400">Platformu kendi tarzına göre renklendir! Seçtiğin tema platformdan çıkış yapana veya sayfayı yenileyene kadar aktif kalacaktır.</p>
               </div>
 
@@ -300,9 +315,9 @@ export default function Settings() {
           )}
 
           {activeTab === 'profile' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 relative z-10">
               <div>
-                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><Camera className={`w-5 h-5 ${theme.text}`} /> Dijital Avatar / Fotoğraf</h3>
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white"><Camera className={`w-5 h-5 ${theme.text}`} /> Dijital Avatar / Fotoğraf</h3>
                 <div className="flex gap-8 items-start">
                   <div className={`w-32 h-32 rounded-3xl border-2 ${theme.border} bg-white/[0.05] p-2 overflow-hidden flex-shrink-0 relative group`}>
                     <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-2xl" />
@@ -327,14 +342,14 @@ export default function Settings() {
 
               <div className="border-t border-white/10 my-6"></div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Ad Soyad</label>
-                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-white/30 transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Sınıf Seviyesi</label>
-                  <select value={classLevel} onChange={(e) => setClassLevel(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none cursor-pointer">
+                  <select value={classLevel} onChange={(e) => setClassLevel(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-white/30 transition-all appearance-none cursor-pointer">
                     {CLASS_LEVELS.map(level => <option key={level} value={level} className="bg-[#0a0a0a]">{level}</option>)}
                   </select>
                 </div>
@@ -347,17 +362,17 @@ export default function Settings() {
           )}
 
           {activeTab === 'security' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2"><Lock className={`w-5 h-5 ${theme.text}`} /> Şifre Değiştirme</h3>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 relative z-10">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white"><Lock className={`w-5 h-5 ${theme.text}`} /> Şifre Değiştirme</h3>
               <p className="text-sm text-gray-400 mb-6">Şifrenizi değiştirmek için lütfen önce mevcut şifrenizi doğrulayın.</p>
               <div className="space-y-4 max-w-md">
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Mevcut Şifre</label>
-                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-white/30 transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Yeni Şifre</label>
-                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-emerald-500/50 transition-all" />
+                  <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-black/50 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-white/30 transition-all" />
                 </div>
               </div>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleUpdatePassword} disabled={loading} className={`mt-6 relative overflow-hidden ${theme.bg} text-black font-bold py-3 px-8 rounded-xl transition-all ${theme.glow} flex items-center justify-center gap-2 group w-fit cursor-pointer opacity-90 hover:opacity-100`}>
@@ -367,11 +382,11 @@ export default function Settings() {
           )}
 
           {activeTab === 'support' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-[500px]">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col h-[500px] relative z-10">
               
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-xl font-semibold flex items-center gap-2"><Headset className={`w-5 h-5 ${theme.text}`} /> Canlı Destek & Bildirim</h3>
+                  <h3 className="text-xl font-semibold flex items-center gap-2 text-white"><Headset className={`w-5 h-5 ${theme.text}`} /> Canlı Destek & Bildirim</h3>
                   <p className="text-sm text-gray-400 mt-1">Kural ihlallerini kanıtlarla bildirebilir veya sistem hakkında yardım isteyebilirsin.</p>
                 </div>
                 
@@ -473,7 +488,7 @@ export default function Settings() {
                       onChange={(e) => setSupportMessage(e.target.value)}
                       disabled={sendingMessage}
                       placeholder="Talebini buraya yaz..." 
-                      className={`w-full h-14 bg-black/50 border border-white/10 rounded-2xl pl-5 pr-16 text-white focus:outline-none focus:${theme.border} transition-all`}
+                      className={`w-full h-14 bg-black/50 border border-white/10 rounded-2xl pl-5 pr-16 text-white focus:outline-none focus:border-white/30 transition-all`}
                     />
                     <button type="submit" disabled={sendingMessage || !supportMessage.trim()} className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl ${theme.bg} text-black flex items-center justify-center ${theme.glowStrong} disabled:opacity-50 cursor-pointer opacity-90 hover:opacity-100 transition-opacity`}>
                       <Send className="w-4 h-4 ml-0.5" />
@@ -481,11 +496,9 @@ export default function Settings() {
                   </div>
                 </form>
               )}
-
             </motion.div>
           )}
-
-        </div>
+        </SpotlightCard>
       </div>
     </div>
   );

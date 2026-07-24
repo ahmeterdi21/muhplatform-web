@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Upload, X, FileText, Heart, Search, Check, FileCheck, ExternalLink, Maximize2 } from 'lucide-react';
 import { supabase } from '../supabase';
 import { ThemeContext } from '../App';
+import SpotlightCard from '../components/SpotlightCard';
+import Particles from '../components/Particles';
 
 export default function Courses() {
   const { theme } = useContext(ThemeContext);
@@ -113,6 +115,21 @@ export default function Courses() {
 
   return (
     <main className="flex-1 p-6 md:p-10 relative overflow-y-auto font-sans">
+      
+      {/* EVRENSEL UZAY/YILDIZ ARKA PLANI */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+        <Particles
+          particleColors={['#ffffff', theme.hex]} // Yıldızlar beyaz ve tema renginde
+          particleCount={250}
+          particleSpread={10}
+          speed={0.1}
+          moveParticlesOnHover={true}
+          particleHoverFactor={1.5}
+          alphaParticles={true}
+          particleBaseSize={100}
+        />
+      </div>
+
       <header className="mb-10 relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
@@ -129,7 +146,7 @@ export default function Courses() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Dosya Ara..."
-              className="w-full bg-black/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all shadow-inner"
+              className="w-full bg-black/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm font-bold focus:outline-none focus:border-white/30 transition-all shadow-inner backdrop-blur-md"
             />
           </div>
           <button 
@@ -144,7 +161,7 @@ export default function Courses() {
       {/* DOSYA LİSTESİ */}
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredMaterials.length === 0 ? (
-           <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-500 bg-white/[0.02] border border-white/10 rounded-3xl">
+           <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-500 bg-white/[0.02] border border-white/10 rounded-3xl backdrop-blur-md">
              <FileText className="w-12 h-12 mb-4 opacity-50" />
              <p className="font-bold">Henüz onaylanmış bir ders materyali bulunmuyor veya aramanızla eşleşmedi.</p>
            </div>
@@ -154,37 +171,49 @@ export default function Courses() {
             const isImage = isImageFile(mat.file_url);
 
             return (
-              <div key={mat.id} className={`bg-white/[0.02] border border-white/10 rounded-3xl p-5 backdrop-blur-md shadow-xl flex flex-col group ${theme.borderHover} transition-all`}>
-                <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-4">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
-                    <img src={mat.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Uploader" className="w-full h-full object-cover" />
+              <SpotlightCard 
+                key={mat.id} 
+                className="p-5 flex flex-col group transition-all shadow-xl"
+                particleCount={10}
+                enableTilt={true}
+                clickEffect={true}
+              >
+                {/* SpotlightCard içindeki z-index içeriğin üstte kalmasını sağlar */}
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-4">
+                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
+                      <img src={mat.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Uploader" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{mat.profiles?.full_name}</p>
+                      <p className="text-[10px] text-gray-400 font-semibold">{mat.profiles?.class_level}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{mat.profiles?.full_name}</p>
-                    <p className="text-[10px] text-gray-400 font-semibold">{mat.profiles?.class_level}</p>
-                  </div>
-                </div>
 
-                <div 
-                  onClick={() => openPreview(mat)}
-                  className={`flex-1 flex flex-col items-center justify-center py-8 rounded-2xl bg-black/40 border border-white/5 cursor-pointer hover:bg-white/[0.04] transition-colors relative group/preview`}
-                >
-                  <Maximize2 className={`absolute top-3 right-3 w-4 h-4 text-gray-500 group-hover/preview:${theme.text} transition-colors`} />
-                  {isImage ? <FileCheck className={`w-12 h-12 mb-3 ${theme.text} opacity-80`} /> : <FileText className={`w-12 h-12 mb-3 ${theme.text} opacity-80`} />}
-                  <h3 className="text-center font-bold text-gray-200 px-4 group-hover/preview:text-white transition-colors">{mat.title}</h3>
-                  <p className="text-[10px] mt-2 text-gray-500 font-bold uppercase tracking-wider">Tıkla ve Ön İzle</p>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between pt-2">
-                  <button 
-                    onClick={() => handleToggleLike(mat.id, mat.course_likes)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${hasLiked ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'}`}
+                  <div 
+                    onClick={() => openPreview(mat)}
+                    className={`flex-1 flex flex-col items-center justify-center py-8 rounded-2xl bg-black/40 border border-white/5 cursor-pointer hover:bg-white/[0.04] transition-colors relative group/preview`}
                   >
-                    <Heart className={`w-3.5 h-3.5 ${hasLiked ? 'fill-red-400' : ''}`} /> {mat.course_likes?.length || 0}
-                  </button>
-                  <span className="text-[10px] text-gray-500 font-bold">{new Date(mat.created_at).toLocaleDateString('tr-TR')}</span>
+                    <Maximize2 className={`absolute top-3 right-3 w-4 h-4 text-gray-500 group-hover/preview:${theme.text} transition-colors`} />
+                    {isImage ? <FileCheck className={`w-12 h-12 mb-3 ${theme.text} opacity-80`} /> : <FileText className={`w-12 h-12 mb-3 ${theme.text} opacity-80`} />}
+                    <h3 className="text-center font-bold text-gray-200 px-4 group-hover/preview:text-white transition-colors">{mat.title}</h3>
+                    <p className="text-[10px] mt-2 text-gray-500 font-bold uppercase tracking-wider">Tıkla ve Ön İzle</p>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between pt-2">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Butona tıklanınca kartın eğilme veya önizleme fonksiyonunun karışmasını önler
+                        handleToggleLike(mat.id, mat.course_likes);
+                      }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative z-20 ${hasLiked ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-transparent'}`}
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${hasLiked ? 'fill-red-400' : ''}`} /> {mat.course_likes?.length || 0}
+                    </button>
+                    <span className="text-[10px] text-gray-500 font-bold">{new Date(mat.created_at).toLocaleDateString('tr-TR')}</span>
+                  </div>
                 </div>
-              </div>
+              </SpotlightCard>
             );
           })
         )}
