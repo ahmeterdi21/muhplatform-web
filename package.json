@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.8",
+    "@supabase/supabase-js": "^2.112.3",
     "chess.js": "^1.4.0",
     "framer-motion": "^12.42.2",
     "gsap": "^3.15.0",

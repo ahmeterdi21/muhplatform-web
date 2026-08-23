@@ -2,10 +2,10 @@ import { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Users, Trophy, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import GradientText from '../components/GradientText';
 import StarBorder from '../components/StarBorder';
 import Lightfall from '../components/Lightfall';
 import Carousel from '../components/Carousel';
+import SplitFlapText from '../components/SplitFlapText'; // YENİ MEKANİK YAZI BİLEŞENİ
 import { ThemeContext } from '../App';
 
 export default function Landing() {
@@ -63,7 +63,7 @@ export default function Landing() {
       {/* HEADER */}
       <header className="w-full max-w-7xl mx-auto px-8 py-10 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-3">
-          <div className={`w-11 h-11 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl ${theme.glowStrong}`}>
+          <div className={`cursor-target w-11 h-11 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl ${theme.glowStrong}`}>
             M
           </div>
           <span className="text-xl font-bold tracking-wider text-white">
@@ -77,7 +77,7 @@ export default function Landing() {
             color="white"
             speed="3s"
             thickness={2}
-            className={`rounded-2xl ${theme.glowStrong} opacity-90 hover:opacity-100 transition-opacity cursor-pointer`}
+            className={`cursor-target rounded-2xl ${theme.glowStrong} opacity-90 hover:opacity-100 transition-opacity cursor-pointer`}
             innerClassName={`px-7 py-3 rounded-[14px] ${theme.bg} text-black text-sm font-bold flex items-center gap-2`}
           >
             Giriş Yap <ArrowRight className="w-4 h-4" />
@@ -87,21 +87,30 @@ export default function Landing() {
 
       {/* ANA İÇERİK (HERO) */}
       <main className="relative z-10 my-auto py-12 flex flex-col items-center">
-        <div className="max-w-7xl mx-auto px-8 mb-12 text-center">
-          <div className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full ${theme.bgLight} ${theme.border} ${theme.text} text-xs font-mono font-extrabold mb-6 tracking-widest uppercase ${theme.glow}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-12 text-center w-full">
+          <div className={`inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full ${theme.bgLight} ${theme.border} ${theme.text} text-xs font-mono font-extrabold mb-8 tracking-widest uppercase ${theme.glow}`}>
             <span className="w-2.5 h-2.5 rounded-full animate-ping" style={{ backgroundColor: theme.hex }}></span>
             ULUDAĞ ÜNİVERSİTESİ MÜHENDİSLİK PLATFORMU V2.0
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight max-w-4xl mx-auto leading-[1.15] mb-6">
-            <GradientText
-              colors={["#ffffff", theme.hex, "#ffffff"]}
-              animationSpeed={6}
-              showBorder={false}
-            >
-              Mühendislik Eğitimi Artık Daha Güçlü ve Senkronize.
-            </GradientText>
-          </h1>
+          {/* YENİ MEKANİK (SPLIT FLAP) YAZI ANİMASYONU */}
+          {/* Mobil ekranlarda taşmaması için scale uygulandı */}
+          <div className="flex justify-center mb-6 w-full overflow-hidden">
+            <div className="scale-[0.55] sm:scale-[0.8] md:scale-100 origin-center transition-transform">
+              <SplitFlapText
+                words={['MUHPLATFORM', 'SISTEM AKTIF', 'SENKRONIZE', 'ODAK ODALARI']}
+                textColor={theme.hex} // Harflerin rengi seçilen temaya göre parlar
+                tileColor="#121212" // Mekanik yaprakların arka plan rengi
+                padTo={12}
+                flipDuration={0.15}
+                stagger={0.08}
+              />
+            </div>
+          </div>
+
+          <p className="text-gray-300 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-6 mt-4">
+            Mühendislik eğitimi artık daha güçlü ve senkronize.
+          </p>
           
           <div className="mt-8 flex justify-center">
             <StarBorder
@@ -112,7 +121,7 @@ export default function Landing() {
               color="white"
               speed="4s"
               thickness={3}
-              className={`rounded-2xl ${theme.glowStrong} opacity-90 hover:opacity-100 group cursor-pointer`}
+              className={`cursor-target rounded-2xl ${theme.glowStrong} opacity-90 hover:opacity-100 group cursor-pointer`}
               innerClassName={`px-9 py-4 rounded-[13px] ${theme.bg} text-black font-extrabold text-base flex items-center gap-3`}
             >
               Aramıza Katıl 
@@ -121,7 +130,7 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* YENİ 3D CAROUSEL ÖZELLİK KARTLARI */}
+        {/* 3D CAROUSEL ÖZELLİK KARTLARI */}
         <div className="w-full max-w-7xl mx-auto flex justify-center py-4 relative z-20">
           <Carousel 
             items={features} 
