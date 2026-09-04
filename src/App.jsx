@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import { 
   Home, BookOpen, MessageSquare, Settings as SettingsIcon, LogOut, 
   Settings, Cpu, ShieldAlert, Users, Circle, User, LayoutGrid, 
-  Calculator as CalculatorIcon, Crown, MonitorPlay, MessageCircle 
+  Calculator as CalculatorIcon, MonitorPlay, MessageCircle, Gamepad2 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -18,9 +18,10 @@ import Lobby from './pages/Lobby';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
 import Calculator from './pages/Calculator';
-import Chess from './pages/Chess';
 import PrivateRooms from './pages/PrivateRooms';
-import PrivateChat from './pages/PrivateChat'; 
+import PrivateChat from './pages/PrivateChat';
+import Arcade from './pages/Arcade';
+import Logo from './components/Logo'; // YENİ LOGO İÇE AKTARILDI
 
 // --- TEMA KONFİGÜRASYONU ---
 export const ThemeContext = createContext();
@@ -125,8 +126,9 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
     <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 justify-between backdrop-blur-xl bg-[#0a0a0a]/80 z-50 relative flex-shrink-0 h-screen sticky top-0 font-sans shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
       
       <div className="flex flex-col items-center gap-5 w-full">
-        <div ref={logoRef} onMouseEnter={handleLogoEnter} className={`w-12 h-12 rounded-2xl ${theme.bg} flex items-center justify-center font-black text-black text-xl mb-6 cursor-pointer ${theme.glowStrong}`}>
-          M
+        {/* YENİ LOGO ENTEGRASYONU */}
+        <div ref={logoRef} onMouseEnter={handleLogoEnter} className="mb-6 cursor-pointer">
+          <Logo className="w-12 h-12" />
         </div>
         
         <PillNavItem to="/" icon={Home} isActive={currentPath === '/'} theme={theme} title="Ana Panel" />
@@ -138,10 +140,10 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
           <PillNavItem 
             icon={LayoutGrid} 
             onClick={() => setShowHub(!showHub)}
-            isActive={showHub || currentPath === '/calculator' || currentPath === '/chess' || currentPath === '/private-rooms' || currentPath === '/admin' || currentPath === '/chat'} 
+            isActive={showHub || currentPath === '/calculator' || currentPath === '/arcade' || currentPath === '/private-rooms' || currentPath === '/admin' || currentPath === '/chat'} 
             theme={theme} 
             title="Sistem Araçları" 
-            notificationCount={unreadPrivateCount} // Sistem araçlarına özel chat bildirimini ekledik
+            notificationCount={unreadPrivateCount} 
           />
 
           <AnimatePresence>
@@ -149,7 +151,6 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
               <motion.div initial={{ opacity: 0, x: -10, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute left-[calc(100%+1.5rem)] top-1/2 -translate-y-1/2 w-64 bg-[#121212] border border-white/10 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 backdrop-blur-xl">
                 <div className="px-3 py-2 mb-1 border-b border-white/5"><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sistem Araçları</p></div>
                 
-                {/* ÖZEL MESAJLAR BURAYA TAŞINDI */}
                 <Link to="/chat" onClick={() => setShowHub(false)} className={`flex items-center justify-between p-3 rounded-xl transition-all ${currentPath === '/chat' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
                   <div className="flex items-center gap-3">
                     <MessageCircle className="w-5 h-5" />
@@ -170,9 +171,10 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
                   <span className="text-sm font-bold">Not Hesaplayıcı</span>
                 </Link>
                 
-                <Link to="/chess" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/chess' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <Crown className="w-5 h-5" />
-                  <span className="text-sm font-bold">Satranç Kulübü</span>
+                {/* EĞLENCE ODASI (ARCADE) EKLENDİ, SATRANÇ SİLİNDİ */}
+                <Link to="/arcade" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/arcade' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                  <Gamepad2 className="w-5 h-5" />
+                  <span className="text-sm font-bold">Eğlence Odası</span>
                 </Link>
                 
                 {isAdmin && (
@@ -217,8 +219,6 @@ function AppContent() {
   useEffect(() => {
     currentPathRef.current = location.pathname;
     if (location.pathname === '/lobby') setUnreadLobbyCount(0);
-    // Özel chate girildiğinde PrivateChat sayfasının içindeki sistem mesajları "görüldü" yapar,
-    // o yüzden burada private count'u direk 0 yapmıyoruz.
   }, [location.pathname]);
 
   const fetchTotalUnreadPrivate = async (userId) => {
@@ -233,9 +233,8 @@ function AppContent() {
   useEffect(() => {
     if (!session) return;
     
-    fetchTotalUnreadPrivate(session.user.id); // İlk girişte sayıları çek
+    fetchTotalUnreadPrivate(session.user.id);
 
-    // Lobi dinleyicisi
     const globalLobbyChannel = supabase
       .channel('global_lobby_notifications')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'lobby_messages' }, (payload) => {
@@ -245,7 +244,6 @@ function AppContent() {
       })
       .subscribe();
 
-    // Özel Chat dinleyicisi
     const privateChannel = supabase
       .channel('global_private_notifications')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'direct_messages', filter: `receiver_id=eq.${session.user.id}` }, () => {
@@ -364,7 +362,10 @@ function AppContent() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/calculator" element={<Calculator />} />
-              <Route path="/chess" element={<Chess />} />
+              
+              {/* SATRANÇ KALKTI, YERİNE ARCADE EKLENDİ */}
+              <Route path="/arcade" element={<Arcade />} />
+              
               <Route path="/private-rooms" element={<PrivateRooms />} />
               {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
               <Route path="*" element={<Navigate to="/" />} />
