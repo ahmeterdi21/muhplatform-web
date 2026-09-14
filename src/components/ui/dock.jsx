@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  AnimatePresence,
-} from 'framer-motion';
-import {
+import React, {
   Children,
   cloneElement,
   createContext,
@@ -17,6 +10,13 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  AnimatePresence,
+} from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const DOCK_HEIGHT = 128;
@@ -91,8 +91,13 @@ function Dock({
 
 function DockItem({ children, className, onClick }) {
   const ref = useRef(null);
+  const fallbackMouseX = useMotionValue(Infinity);
 
-  const { distance, magnification, mouseX, spring } = useDock();
+  const dockCtx = useContext(DockContext);
+  const distance = dockCtx?.distance ?? DEFAULT_DISTANCE;
+  const magnification = dockCtx?.magnification ?? DEFAULT_MAGNIFICATION;
+  const mouseX = dockCtx?.mouseX ?? fallbackMouseX;
+  const spring = dockCtx?.spring ?? { mass: 0.1, stiffness: 150, damping: 12 };
 
   const isHovered = useMotionValue(0);
 
@@ -126,7 +131,7 @@ function DockItem({ children, className, onClick }) {
       role="button"
     >
       {Children.map(children, (child) =>
-        cloneElement(child, { width, isHovered })
+        React.isValidElement(child) ? cloneElement(child, { width, isHovered }) : child
       )}
     </motion.div>
   );
@@ -169,8 +174,10 @@ function DockLabel({ children, className, ...rest }) {
 
 function DockIcon({ children, className, ...rest }) {
   const width = rest['width'];
+  const defaultVal = useMotionValue(44);
+  const targetWidth = width || defaultVal;
 
-  const widthTransform = useTransform(width, (val) => val / 2.2);
+  const widthTransform = useTransform(targetWidth, (val) => (val || 44) / 2.2);
 
   return (
     <motion.div
