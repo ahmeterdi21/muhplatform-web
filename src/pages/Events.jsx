@@ -46,7 +46,7 @@ export default function Events() {
       // 2. Fallback to localStorage if no DB events found
       if (loadedEvents.length === 0) {
         const saved = localStorage.getItem(storageKey);
-        if (saved) {
+        if (saved !== null) {
           try {
             const parsed = JSON.parse(saved);
             loadedEvents = parsed.map(item => ({
@@ -60,39 +60,13 @@ export default function Events() {
         }
       }
 
-      // 3. Default demo events for new users if no personal events exist
-      if (loadedEvents.length === 0) {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        const day = now.getDate();
-
-        loadedEvents = [
-          {
-            id: "evt-1",
-            title: "Statik & Mukavemet Vize Hazırlığı",
-            description: "Bölüm 4 ve 5 soru çözümleri ve formül kâğıdı hazırlığı.",
-            startTime: new Date(year, month, day, 10, 0),
-            endTime: new Date(year, month, day, 12, 30),
-            color: "green",
-            category: "Ders / Sınav",
-            tags: ["Önemli", "Sınav"],
-          },
-          {
-            id: "evt-2",
-            title: "Mühendislik Projesi Raporu Teslimi",
-            description: "Taslak analizi ve PDF formatında sisteme yükleme.",
-            startTime: new Date(year, month, day + 2, 14, 0),
-            endTime: new Date(year, month, day + 2, 16, 0),
-            color: "purple",
-            category: "Proje Teslimi",
-            tags: ["Acil", "Ödev"],
-          }
-        ];
-        localStorage.setItem(storageKey, JSON.stringify(loadedEvents));
+      // Filter out any legacy demo events (evt-1, evt-2, evt-3)
+      const cleanEvents = loadedEvents.filter(e => e.id !== "evt-1" && e.id !== "evt-2" && e.id !== "evt-3");
+      if (cleanEvents.length !== loadedEvents.length) {
+        localStorage.setItem(storageKey, JSON.stringify(cleanEvents));
       }
 
-      setPersonalEvents(loadedEvents);
+      setPersonalEvents(cleanEvents);
       setLoading(false);
     };
 
