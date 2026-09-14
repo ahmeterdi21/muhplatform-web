@@ -129,7 +129,7 @@ function BottomDockNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
   ];
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-full font-sans">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-full font-sans no-scrollbar">
       {/* Sistem Araçları Pop-up Menu */}
       <AnimatePresence>
         {showHub && (
