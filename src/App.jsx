@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } f
 import { 
   Home, BookOpen, MessageSquare, Settings as SettingsIcon, LogOut, 
   Settings, Cpu, ShieldAlert, Users, Circle, User, LayoutGrid, 
-  Calculator as CalculatorIcon, MonitorPlay, MessageCircle, Gamepad2 
+  Calculator as CalculatorIcon, MonitorPlay, MessageCircle, Gamepad2, Calendar 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -21,6 +21,7 @@ import Calculator from './pages/Calculator';
 import PrivateRooms from './pages/PrivateRooms';
 import PrivateChat from './pages/PrivateChat';
 import Arcade from './pages/Arcade';
+import Events from './pages/Events';
 import Logo from './components/Logo'; // YENİ LOGO İÇE AKTARILDI
 
 // --- TEMA KONFİGÜRASYONU ---
@@ -135,6 +136,7 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
         <PillNavItem to="/courses" icon={BookOpen} isActive={currentPath === '/courses'} theme={theme} title="Ders Notları" />
         <PillNavItem to="/lobby" icon={MessageSquare} isActive={currentPath === '/lobby'} theme={theme} title="Ortak Lobi" notificationCount={unreadLobbyCount} />
         <PillNavItem to="/profile" icon={User} isActive={currentPath === '/profile'} theme={theme} title="Profilim" />
+        <PillNavItem to="/events" icon={Calendar} isActive={currentPath === '/events'} theme={theme} title="Etkinlik Takvimi" />
 
         <div className="relative mt-2" ref={hubRef}>
           <PillNavItem 
@@ -360,6 +362,7 @@ function AppContent() {
               <Route path="/lobby" element={<Lobby />} />
               <Route path="/chat" element={<PrivateChat />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/calculator" element={<Calculator />} />
               
