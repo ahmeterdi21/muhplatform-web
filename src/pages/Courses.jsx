@@ -182,7 +182,7 @@ export default function Courses() {
                 <div className="relative z-10 flex flex-col h-full">
                   <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-4">
                     <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0">
-                      <img src={mat.profiles?.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Uploader" className="w-full h-full object-cover" />
+                      <img src={mat.profiles?.avatar_url || 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown'} alt="Uploader" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-white truncate">{mat.profiles?.full_name}</p>

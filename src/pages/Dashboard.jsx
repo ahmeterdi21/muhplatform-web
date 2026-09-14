@@ -140,7 +140,7 @@ export default function Dashboard({ totalSeconds }) {
                       onClick={() => navigate(`/profile?id=${user.id}`)}
                       className="p-3 rounded-xl hover:bg-white/[0.05] flex items-center gap-3 cursor-pointer transition-colors group"
                     >
-                      <img src={user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-white/10" />
+                      <img src={user.avatar_url || 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown'} alt="Avatar" className="w-10 h-10 rounded-xl object-cover border border-white/10" />
                       <div className="flex-1 min-w-0">
                         <p className={`text-sm font-bold text-white group-hover:${theme.text} transition-colors truncate`}>{user.full_name || 'İsimsiz Mühendis'}</p>
                         <p className="text-[11px] text-gray-400 font-semibold">{user.class_level || 'Öğrenci'}</p>

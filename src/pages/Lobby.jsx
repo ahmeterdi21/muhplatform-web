@@ -168,7 +168,7 @@ export default function Lobby() {
 
         <div className="flex-1 overflow-y-auto space-y-5 p-6 custom-scrollbar relative z-10">
           {messages.map((msg) => {
-            const sender = profilesMap[msg.sender_id] || { full_name: 'Bilinmeyen Kullanıcı', avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown', class_level: 'Öğrenci', score: 0, is_admin: false };
+            const sender = profilesMap[msg.sender_id] || { full_name: 'Bilinmeyen Kullanıcı', avatar_url: 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown', class_level: 'Öğrenci', score: 0, is_admin: false };
             const isMe = msg.sender_id === currentUser?.id;
             const bubbleStyle = getBubbleStyle(sender.score, isMe);
 

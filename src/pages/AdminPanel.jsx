@@ -469,7 +469,7 @@ export default function AdminPanel() {
                       style={{ borderLeftColor: selectedRoom?.id === roomUser.id ? theme.hex : 'transparent' }}
                     >
                       <div className="w-10 h-10 rounded-xl bg-white/5 overflow-hidden border border-white/10 flex-shrink-0 relative">
-                        <img src={roomUser.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Avatar" className="w-full h-full object-cover" />
+                        <img src={roomUser.avatar_url || 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown'} alt="Avatar" className="w-full h-full object-cover" />
                         {supportSubTab === 'archive' && (
                           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                             <Archive className={`w-4 h-4 ${theme.text}`} />
@@ -608,7 +608,7 @@ export default function AdminPanel() {
                     
                     <div className="flex items-center gap-3 mb-4">
                       <div className={`w-12 h-12 rounded-xl overflow-hidden border ${user.is_admin ? 'border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'border-white/10'}`}>
-                        <img src={user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="User" className="w-full h-full object-cover" />
+                        <img src={user.avatar_url || 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown'} alt="User" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-bold text-base truncate flex items-center gap-2">

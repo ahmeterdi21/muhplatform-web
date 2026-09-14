@@ -390,7 +390,7 @@ function AppContent() {
                   <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                     {activeUsers.map((user) => (
                       <div key={user.id} onClick={() => { setShowActiveModal(false); window.location.href = `/profile?id=${user.id}`; }} className={`p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center gap-4 ${theme.borderHover} transition-colors cursor-pointer`}>
-                        <div className="w-12 h-12 rounded-xl bg-white/5 overflow-hidden border border-white/10 flex-shrink-0 relative"><img src={user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=Unknown'} alt="Avatar" className="w-full h-full object-cover" /><div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${theme.bg} border-2 border-[#121212]`}></div></div>
+                        <div className="w-12 h-12 rounded-xl bg-white/5 overflow-hidden border border-white/10 flex-shrink-0 relative"><img src={user.avatar_url || 'https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Unknown'} alt="Avatar" className="w-full h-full object-cover" /><div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ${theme.bg} border-2 border-[#121212]`}></div></div>
                         <div className="flex-1 min-w-0"><p className="text-sm font-bold text-white truncate">{user.full_name || 'İsimsiz Öğrenci'}</p><div className="flex items-center gap-2 mt-1"><span className={`text-[10px] px-2 py-0.5 rounded-full ${theme.bgLight} ${theme.text} font-bold ${theme.border}`}>Seviye {user.level || 1}</span><span className={`text-[10px] font-bold ${theme.text500}`}>{user.score || 0} Puan</span></div></div>
                       </div>
                     ))}

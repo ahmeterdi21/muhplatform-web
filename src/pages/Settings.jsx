@@ -5,19 +5,11 @@ import { supabase } from '../supabase';
 import { ThemeContext } from '../App'; 
 import SpotlightCard from '../components/SpotlightCard';
 import Particles from '../components/Particles';
+import settingsConfig from '../settings.json';
 
-const AVATAR_LIBRARY = [
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Engineer&baseColor=10b981",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Tactical&baseColor=10b981",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Chess&baseColor=10b981",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Lion&baseColor=10b981",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Nova&baseColor=06b6d4",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Pulse&baseColor=06b6d4",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Matrix&baseColor=8b5cf6",
-  "https://api.dicebear.com/7.x/bottts/svg?seed=Cyber&baseColor=8b5cf6",
-];
-
-const CLASS_LEVELS = ["Hazırlık", "1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf", "Yüksek Lisans"];
+const AVATAR_LIBRARY = settingsConfig.avatarLibrary;
+const AVATAR_CATEGORIES = settingsConfig.avatarCategories || [];
+const CLASS_LEVELS = settingsConfig.classLevels || ["Hazırlık", "1. Sınıf", "2. Sınıf", "3. Sınıf", "4. Sınıf", "Yüksek Lisans"];
 
 export default function Settings() {
   const { currentTheme, setCurrentTheme, theme, themeConfig } = useContext(ThemeContext);
@@ -35,6 +27,7 @@ export default function Settings() {
   const [fullName, setFullName] = useState('');
   const [classLevel, setClassLevel] = useState('3. Sınıf');
   const [avatarUrl, setAvatarUrl] = useState(AVATAR_LIBRARY[0]);
+  const [selectedCategory, setSelectedCategory] = useState(AVATAR_CATEGORIES[0]?.id || 'cyberbots');
   
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -328,11 +321,26 @@ export default function Settings() {
                   </div>
                   
                   <div className="flex-1">
-                    <p className="text-sm text-gray-400 mb-3">Veya kütüphaneden siber-avatarını seç:</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                      <p className="text-sm text-gray-400">Veya kütüphaneden modernist avatarını seç:</p>
+                      {AVATAR_CATEGORIES.length > 0 && (
+                        <div className="flex flex-wrap gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+                          {AVATAR_CATEGORIES.map((cat) => (
+                            <button
+                              key={cat.id}
+                              onClick={() => setSelectedCategory(cat.id)}
+                              className={`px-2.5 py-1 text-xs rounded-lg transition-all cursor-pointer ${selectedCategory === cat.id ? `${theme.bg} text-black font-semibold shadow-md` : 'text-gray-400 hover:text-white'}`}
+                            >
+                              {cat.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="grid grid-cols-4 gap-3">
-                      {AVATAR_LIBRARY.map((url, idx) => (
-                        <button key={idx} onClick={() => setAvatarUrl(url)} className={`p-2 rounded-2xl border ${avatarUrl === url ? `${theme.border} ${theme.bgLight}` : 'border-white/10 hover:bg-white/[0.05]'} transition-all cursor-pointer`}>
-                          <img src={url} alt={`Avatar ${idx}`} className="w-12 h-12 mx-auto" />
+                      {(AVATAR_CATEGORIES.find(c => c.id === selectedCategory)?.avatars || AVATAR_LIBRARY).map((url, idx) => (
+                        <button key={idx} onClick={() => setAvatarUrl(url)} className={`p-2 rounded-2xl border ${avatarUrl === url ? `${theme.border} ${theme.bgLight} scale-105 shadow-lg` : 'border-white/10 hover:bg-white/[0.05] hover:scale-102'} transition-all cursor-pointer relative group/item`}>
+                          <img src={url} alt={`Avatar ${idx}`} className="w-12 h-12 mx-auto rounded-xl object-cover" />
                         </button>
                       ))}
                     </div>

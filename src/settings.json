@@ -1,0 +1,63 @@
+{
+  "defaultAvatar": "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=CyberUser&radius=20",
+  "classLevels": [
+    "Hazırlık",
+    "1. Sınıf",
+    "2. Sınıf",
+    "3. Sınıf",
+    "4. Sınıf",
+    "Yüksek Lisans"
+  ],
+  "avatarCategories": [
+    {
+      "id": "cyberbots",
+      "name": "Siber Robotlar",
+      "avatars": [
+        "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Nexus&radius=20&backgroundColor=0d0f17",
+        "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Vortex&radius=20&backgroundColor=0d0f17",
+        "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Aura&radius=20&backgroundColor=0d0f17",
+        "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Quantum&radius=20&backgroundColor=0d0f17"
+      ]
+    },
+    {
+      "id": "notionists",
+      "name": "Modern Minimal",
+      "avatars": [
+        "https://api.dicebear.com/9.x/notionists/svg?seed=Aria&backgroundColor=121420",
+        "https://api.dicebear.com/9.x/notionists/svg?seed=Leo&backgroundColor=121420",
+        "https://api.dicebear.com/9.x/notionists/svg?seed=Maya&backgroundColor=121420",
+        "https://api.dicebear.com/9.x/notionists/svg?seed=Ethan&backgroundColor=121420"
+      ]
+    },
+    {
+      "id": "glass_shapes",
+      "name": "3D & Geometrik",
+      "avatars": [
+        "https://api.dicebear.com/9.x/shapes/svg?seed=Prism&shape1Color=06b6d4,10b981",
+        "https://api.dicebear.com/9.x/shapes/svg?seed=Matrix&shape1Color=8b5cf6,ec4899",
+        "https://api.dicebear.com/9.x/glass/svg?seed=CyberPulse",
+        "https://api.dicebear.com/9.x/glass/svg?seed=NeonGrid"
+      ]
+    },
+    {
+      "id": "characters",
+      "name": "Karakterler",
+      "avatars": [
+        "https://api.dicebear.com/9.x/lorelei/svg?seed=Kael&backgroundColor=0f172a",
+        "https://api.dicebear.com/9.x/lorelei/svg?seed=Zara&backgroundColor=0f172a",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Orion&backgroundColor=0f172a",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Lyra&backgroundColor=0f172a"
+      ]
+    }
+  ],
+  "avatarLibrary": [
+    "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Nexus&radius=20&backgroundColor=0d0f17",
+    "https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Vortex&radius=20&backgroundColor=0d0f17",
+    "https://api.dicebear.com/9.x/notionists/svg?seed=Aria&backgroundColor=121420",
+    "https://api.dicebear.com/9.x/notionists/svg?seed=Leo&backgroundColor=121420",
+    "https://api.dicebear.com/9.x/shapes/svg?seed=Prism&shape1Color=06b6d4,10b981",
+    "https://api.dicebear.com/9.x/glass/svg?seed=CyberPulse",
+    "https://api.dicebear.com/9.x/lorelei/svg?seed=Zara&backgroundColor=0f172a",
+    "https://api.dicebear.com/9.x/adventurer/svg?seed=Orion&backgroundColor=0f172a"
+  ]
+}
