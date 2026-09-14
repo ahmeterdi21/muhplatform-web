@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, BookOpen, MessageSquare, Settings as SettingsIcon, LogOut, 
   Settings, Cpu, ShieldAlert, Users, Circle, User, LayoutGrid, 
@@ -22,7 +22,8 @@ import PrivateRooms from './pages/PrivateRooms';
 import PrivateChat from './pages/PrivateChat';
 import Arcade from './pages/Arcade';
 import Events from './pages/Events';
-import Logo from './components/Logo'; // YENİ LOGO İÇE AKTARILDI
+import Logo from './components/Logo';
+import { Dock, DockIcon, DockItem, DockLabel } from './components/ui/dock';
 
 // --- TEMA KONFİGÜRASYONU ---
 export const ThemeContext = createContext();
@@ -102,18 +103,14 @@ function PillNavItem({ to, icon: Icon, isActive, onClick, theme, title, isDanger
   return content;
 }
 
-// SIDEBAR NAVİGASYON
-function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
+// APPLE STYLE BOTTOM DOCK NAVİGASYON
+function BottomDockNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
   const { theme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
   const [showHub, setShowHub] = useState(false);
   const hubRef = useRef(null);
-  const logoRef = useRef(null);
-
-  const handleLogoEnter = () => {
-    gsap.fromTo(logoRef.current, { rotate: 0 }, { rotate: 360, duration: 0.5, ease: "power3.out", overwrite: "auto" });
-  };
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -123,79 +120,138 @@ function SidebarNav({ isAdmin, unreadLobbyCount, unreadPrivateCount }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const navItems = [
+    { title: "Ana Panel", icon: Home, path: "/", isActive: currentPath === '/' },
+    { title: "Ders Notları", icon: BookOpen, path: "/courses", isActive: currentPath === '/courses' },
+    { title: "Ortak Lobi", icon: MessageSquare, path: "/lobby", isActive: currentPath === '/lobby', count: unreadLobbyCount },
+    { title: "Profilim", icon: User, path: "/profile", isActive: currentPath === '/profile' },
+    { title: "Etkinlik Takvimi", icon: Calendar, path: "/events", isActive: currentPath === '/events' },
+  ];
+
   return (
-    <nav className="w-24 border-r border-white/5 flex flex-col items-center py-8 justify-between backdrop-blur-xl bg-[#0a0a0a]/80 z-50 relative flex-shrink-0 h-screen sticky top-0 font-sans shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
-      
-      <div className="flex flex-col items-center gap-5 w-full">
-        {/* YENİ LOGO ENTEGRASYONU */}
-        <div ref={logoRef} onMouseEnter={handleLogoEnter} className="mb-6 cursor-pointer">
-          <Logo className="w-12 h-12" />
-        </div>
-        
-        <PillNavItem to="/" icon={Home} isActive={currentPath === '/'} theme={theme} title="Ana Panel" />
-        <PillNavItem to="/courses" icon={BookOpen} isActive={currentPath === '/courses'} theme={theme} title="Ders Notları" />
-        <PillNavItem to="/lobby" icon={MessageSquare} isActive={currentPath === '/lobby'} theme={theme} title="Ortak Lobi" notificationCount={unreadLobbyCount} />
-        <PillNavItem to="/profile" icon={User} isActive={currentPath === '/profile'} theme={theme} title="Profilim" />
-        <PillNavItem to="/events" icon={Calendar} isActive={currentPath === '/events'} theme={theme} title="Etkinlik Takvimi" />
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-full font-sans">
+      {/* Sistem Araçları Pop-up Menu */}
+      <AnimatePresence>
+        {showHub && (
+          <div ref={hubRef} className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="w-72 bg-[#121212]/95 border border-white/15 rounded-3xl p-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
+            >
+              <div className="px-3 py-2 mb-2 border-b border-white/10 flex items-center justify-between">
+                <p className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                  <LayoutGrid className="w-3.5 h-3.5" /> Sistem Araçları
+                </p>
+                <button onClick={() => setShowHub(false)} className="text-gray-500 hover:text-white text-xs cursor-pointer">✕</button>
+              </div>
 
-        <div className="relative mt-2" ref={hubRef}>
-          <PillNavItem 
-            icon={LayoutGrid} 
-            onClick={() => setShowHub(!showHub)}
-            isActive={showHub || currentPath === '/calculator' || currentPath === '/arcade' || currentPath === '/private-rooms' || currentPath === '/admin' || currentPath === '/chat'} 
-            theme={theme} 
-            title="Sistem Araçları" 
-            notificationCount={unreadPrivateCount} 
-          />
-
-          <AnimatePresence>
-            {showHub && (
-              <motion.div initial={{ opacity: 0, x: -10, scale: 0.95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: -10, scale: 0.95 }} transition={{ duration: 0.2 }} className="absolute left-[calc(100%+1.5rem)] top-1/2 -translate-y-1/2 w-64 bg-[#121212] border border-white/10 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 backdrop-blur-xl">
-                <div className="px-3 py-2 mb-1 border-b border-white/5"><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Sistem Araçları</p></div>
-                
-                <Link to="/chat" onClick={() => setShowHub(false)} className={`flex items-center justify-between p-3 rounded-xl transition-all ${currentPath === '/chat' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="w-5 h-5" />
-                    <span className="text-sm font-bold">Özel Mesajlar</span>
-                  </div>
-                  {unreadPrivateCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">{unreadPrivateCount}</span>
-                  )}
-                </Link>
-
-                <Link to="/private-rooms" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/private-rooms' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <MonitorPlay className="w-5 h-5" />
-                  <span className="text-sm font-bold">Özel Odalar</span>
-                </Link>
-
-                <Link to="/calculator" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/calculator' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <CalculatorIcon className="w-5 h-5" />
-                  <span className="text-sm font-bold">Not Hesaplayıcı</span>
-                </Link>
-                
-                {/* EĞLENCE ODASI (ARCADE) EKLENDİ, SATRANÇ SİLİNDİ */}
-                <Link to="/arcade" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all ${currentPath === '/arcade' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
-                  <Gamepad2 className="w-5 h-5" />
-                  <span className="text-sm font-bold">Eğlence Odası</span>
-                </Link>
-                
-                {isAdmin && (
-                  <Link to="/admin" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-xl transition-all mt-1 ${currentPath === '/admin' ? `bg-amber-500/20 text-amber-400` : 'text-amber-500/70 hover:bg-amber-500/10 hover:text-amber-400'}`}>
-                    <ShieldAlert className="w-5 h-5" />
-                    <span className="text-sm font-bold">Yönetici Paneli</span>
-                  </Link>
+              <Link to="/chat" onClick={() => setShowHub(false)} className={`flex items-center justify-between p-3 rounded-2xl transition-all ${currentPath === '/chat' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <div className="flex items-center gap-3">
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="text-sm font-bold">Özel Mesajlar</span>
+                </div>
+                {unreadPrivateCount > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.5)]">{unreadPrivateCount}</span>
                 )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-      
-      <div className="flex flex-col gap-5 items-center w-full">
-        <PillNavItem to="/settings" icon={SettingsIcon} isActive={currentPath === '/settings'} theme={theme} title="Ayarlar" />
-        <PillNavItem onClick={async () => await supabase.auth.signOut()} icon={LogOut} theme={theme} title="Çıkış Yap" isDanger={true} />
-      </div>
-    </nav>
+              </Link>
+
+              <Link to="/private-rooms" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${currentPath === '/private-rooms' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <MonitorPlay className="w-5 h-5" />
+                <span className="text-sm font-bold">Özel Odalar</span>
+              </Link>
+
+              <Link to="/calculator" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${currentPath === '/calculator' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <CalculatorIcon className="w-5 h-5" />
+                <span className="text-sm font-bold">Not Hesaplayıcı</span>
+              </Link>
+
+              <Link to="/arcade" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-2xl transition-all ${currentPath === '/arcade' ? `${theme.bgLight} ${theme.text}` : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}>
+                <Gamepad2 className="w-5 h-5" />
+                <span className="text-sm font-bold">Eğlence Odası</span>
+              </Link>
+
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setShowHub(false)} className={`flex items-center gap-3 p-3 rounded-2xl transition-all mt-1 ${currentPath === '/admin' ? `bg-amber-500/20 text-amber-400` : 'text-amber-500/70 hover:bg-amber-500/10 hover:text-amber-400'}`}>
+                  <ShieldAlert className="w-5 h-5" />
+                  <span className="text-sm font-bold">Yönetici Paneli</span>
+                </Link>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Apple Dock */}
+      <Dock className="items-center pb-0">
+        {navItems.map((item, idx) => {
+          const IconComponent = item.icon;
+          return (
+            <DockItem key={idx} onClick={() => navigate(item.path)} className="relative">
+              <DockLabel>{item.title}</DockLabel>
+              <DockIcon>
+                <div className={`w-full h-full rounded-2xl flex items-center justify-center transition-all ${
+                  item.isActive 
+                    ? `${theme.bg} text-black font-bold shadow-[0_0_20px_rgba(16,185,129,0.5)]` 
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                }`}>
+                  <IconComponent className="w-5 h-5" />
+                </div>
+              </DockIcon>
+              {item.count > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md">
+                  {item.count}
+                </span>
+              )}
+            </DockItem>
+          );
+        })}
+
+        <div className="w-[1px] h-6 bg-white/15 my-auto mx-1"></div>
+
+        <DockItem onClick={() => setShowHub(!showHub)} className="relative">
+          <DockLabel>Sistem Araçları</DockLabel>
+          <DockIcon>
+            <div className={`w-full h-full rounded-2xl flex items-center justify-center transition-all ${
+              showHub || currentPath === '/calculator' || currentPath === '/arcade' || currentPath === '/private-rooms' || currentPath === '/admin' || currentPath === '/chat'
+                ? `${theme.bgLight} ${theme.text} border ${theme.border}` 
+                : 'text-gray-300 hover:text-white hover:bg-white/10'
+            }`}>
+              <LayoutGrid className="w-5 h-5" />
+            </div>
+          </DockIcon>
+          {unreadPrivateCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md animate-pulse">
+              {unreadPrivateCount}
+            </span>
+          )}
+        </DockItem>
+
+        <DockItem onClick={() => navigate('/settings')}>
+          <DockLabel>Ayarlar</DockLabel>
+          <DockIcon>
+            <div className={`w-full h-full rounded-2xl flex items-center justify-center transition-all ${
+              currentPath === '/settings' 
+                ? `${theme.bg} text-black font-bold shadow-[0_0_20px_rgba(16,185,129,0.5)]` 
+                : 'text-gray-300 hover:text-white hover:bg-white/10'
+            }`}>
+              <SettingsIcon className="w-5 h-5" />
+            </div>
+          </DockIcon>
+        </DockItem>
+
+        <DockItem onClick={async () => await supabase.auth.signOut()}>
+          <DockLabel>Çıkış Yap</DockLabel>
+          <DockIcon>
+            <div className="w-full h-full rounded-2xl flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-all">
+              <LogOut className="w-5 h-5" />
+            </div>
+          </DockIcon>
+        </DockItem>
+      </Dock>
+    </div>
   );
 }
 
@@ -353,9 +409,9 @@ function AppContent() {
             <motion.div animate={{ rotate: -360 }} transition={{ duration: 120, repeat: Infinity, ease: "linear" }} className="absolute -bottom-32 -right-32 text-white opacity-[0.02]"><Cpu className="w-[600px] h-[600px]" strokeWidth={0.5} /></motion.div>
           </div>
           
-          <SidebarNav isAdmin={isAdmin} unreadLobbyCount={unreadLobbyCount} unreadPrivateCount={unreadPrivateCount} />
+          <BottomDockNav isAdmin={isAdmin} unreadLobbyCount={unreadLobbyCount} unreadPrivateCount={unreadPrivateCount} />
 
-          <div className="flex-1 relative z-10 overflow-y-auto h-screen custom-scrollbar">
+          <div className="flex-1 relative z-10 overflow-y-auto min-h-screen pb-28 custom-scrollbar">
             <Routes>
               <Route path="/" element={<Dashboard totalSeconds={studySeconds} />} />
               <Route path="/courses" element={<Courses />} />
