@@ -1,16 +1,18 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar as CalendarIcon, Sparkles, CheckCircle2, Clock, BookOpen, Layers } from 'lucide-react';
+import { Calendar as CalendarIcon, Sparkles, CheckCircle2, Clock, BookOpen, GraduationCap, ToggleLeft, ToggleRight } from 'lucide-react';
 import { supabase } from '../supabase';
 import { ThemeContext } from '../App';
 import SpotlightCard from '../components/SpotlightCard';
 import Particles from '../components/Particles';
 import { EventManager } from '../components/ui/event-manager';
+import { ACADEMIC_CALENDAR_EVENTS } from '../data/academicCalendar';
 
 export default function Events() {
   const { theme } = useContext(ThemeContext);
   const [currentUser, setCurrentUser] = useState(null);
-  const [events, setEvents] = useState([]);
+  const [personalEvents, setPersonalEvents] = useState([]);
+  const [showAcademic, setShowAcademic] = useState(true);
   const [loading, setLoading] = useState(true);
 
   // Load user session & user-specific events
@@ -58,7 +60,7 @@ export default function Events() {
         }
       }
 
-      // 3. Default demo events for new users
+      // 3. Default demo events for new users if no personal events exist
       if (loadedEvents.length === 0) {
         const now = new Date();
         const year = now.getFullYear();
@@ -85,22 +87,12 @@ export default function Events() {
             color: "purple",
             category: "Proje Teslimi",
             tags: ["Acil", "Ödev"],
-          },
-          {
-            id: "evt-3",
-            title: "Kütüphane Odaklanma Seansı",
-            description: "Akışkanlar mekaniği ödev takibi.",
-            startTime: new Date(year, month, day + 4, 15, 0),
-            endTime: new Date(year, month, day + 4, 18, 0),
-            color: "blue",
-            category: "Kişisel Not",
-            tags: ["Kütüphane"],
           }
         ];
         localStorage.setItem(storageKey, JSON.stringify(loadedEvents));
       }
 
-      setEvents(loadedEvents);
+      setPersonalEvents(loadedEvents);
       setLoading(false);
     };
 
@@ -112,7 +104,6 @@ export default function Events() {
     const storageKey = `muhplatform_events_${user.id}`;
     localStorage.setItem(storageKey, JSON.stringify(updatedEvents));
 
-    // Async attempt to persist to Supabase user_events table if it exists
     try {
       const dbPayload = updatedEvents.map(evt => ({
         id: evt.id,
@@ -126,36 +117,46 @@ export default function Events() {
         tags: evt.tags || []
       }));
       await supabase.from('user_events').upsert(dbPayload);
-    } catch (e) {
-      // Ignored if table isn't created yet in Supabase schema
-    }
+    } catch (e) {}
   };
 
   const handleEventCreate = (newEvent) => {
     if (!currentUser) return;
-    const updated = [...events, newEvent];
-    setEvents(updated);
+    const updated = [...personalEvents, newEvent];
+    setPersonalEvents(updated);
     saveEventsLocallyAndDb(updated, currentUser);
   };
 
   const handleEventUpdate = (id, updatedFields) => {
     if (!currentUser) return;
-    const updated = events.map(e => e.id === id ? { ...e, ...updatedFields } : e);
-    setEvents(updated);
+    // Don't allow editing official academic events
+    if (id.startsWith('acad-')) return;
+
+    const updated = personalEvents.map(e => e.id === id ? { ...e, ...updatedFields } : e);
+    setPersonalEvents(updated);
     saveEventsLocallyAndDb(updated, currentUser);
   };
 
   const handleEventDelete = (id) => {
     if (!currentUser) return;
-    const updated = events.filter(e => e.id !== id);
-    setEvents(updated);
+    if (id.startsWith('acad-')) return;
+
+    const updated = personalEvents.filter(e => e.id !== id);
+    setPersonalEvents(updated);
     saveEventsLocallyAndDb(updated, currentUser);
 
-    // Delete from Supabase if available
     try {
       supabase.from('user_events').delete().eq('id', id).eq('user_id', currentUser.id);
     } catch (e) {}
   };
+
+  // Combine academic events with student's personal events
+  const combinedEvents = useMemo(() => {
+    if (showAcademic) {
+      return [...ACADEMIC_CALENDAR_EVENTS, ...personalEvents];
+    }
+    return personalEvents;
+  }, [showAcademic, personalEvents]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white p-4 sm:p-8 relative overflow-hidden font-sans">
@@ -171,42 +172,76 @@ export default function Events() {
               </div>
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-3">
-                  Kişisel Etkinlik Takvimi
+                  Kişisel Etkinlik & Akademik Takvim
                   <span className={`text-xs px-3 py-1 rounded-full ${theme.bgLight} ${theme.text} font-bold border ${theme.border}`}>
-                    Event Manager
+                    Uludağ Üni. Entegre
                   </span>
                 </h1>
                 <p className="text-sm text-gray-400 mt-1">
-                  Çalışma planlarınızı, ders notlarınızı ve sınav takviminizi günlere özel organize edin.
+                  Bursa Uludağ Üniversitesi 2026-2027 Lisans Akademik Takvimi kişisel takviminize renk vurgularıyla entegre edilmiştir.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 bg-black/40 p-3 rounded-2xl border border-white/10 text-xs">
-              <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                <CheckCircle2 className="w-4 h-4" /> Senkronize
-              </div>
-              <span className="text-gray-600">|</span>
-              <div className="text-gray-300 font-semibold flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-gray-400" /> Toplam {events.length} Etkinlik
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Toggle Academic Calendar */}
+              <button
+                onClick={() => setShowAcademic(!showAcademic)}
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer font-bold text-xs ${
+                  showAcademic
+                    ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    : 'bg-black/40 border-white/10 text-gray-400 hover:text-white'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4" />
+                <span>Akademik Takvim: {showAcademic ? 'Açık' : 'Kapalı'}</span>
+                {showAcademic ? <ToggleRight className="w-5 h-5 text-emerald-400" /> : <ToggleLeft className="w-5 h-5 text-gray-500" />}
+              </button>
+
+              <div className="flex items-center gap-3 bg-black/40 p-3 rounded-2xl border border-white/10 text-xs">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <CheckCircle2 className="w-4 h-4" /> Entegre
+                </div>
+                <span className="text-gray-600">|</span>
+                <div className="text-gray-300 font-semibold flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-gray-400" /> Toplam {combinedEvents.length} Etkinlik
+                </div>
               </div>
             </div>
           </div>
         </SpotlightCard>
 
+        {/* Legend Banner */}
+        <div className="flex flex-wrap items-center gap-3 bg-black/40 p-3 px-5 rounded-2xl border border-white/10 text-xs text-gray-300">
+          <span className="font-bold text-white flex items-center gap-1.5">
+            <GraduationCap className="w-4 h-4 text-emerald-400" /> Renk Kodları:
+          </span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Ders Kayıt & Harç</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Ders Dönemleri</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Sınavlar & Bütünleme</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span> Dini Bayramlar</span>
+          <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-pink-500"></span> Resmi Tatiller</span>
+        </div>
+
         {/* Event Manager Component */}
         {loading ? (
           <div className="p-12 text-center text-gray-400">
-            Takvim yükleniyor...
+            Akademik takvim yükleniyor...
           </div>
         ) : (
           <EventManager
-            events={events}
+            events={combinedEvents}
             onEventCreate={handleEventCreate}
             onEventUpdate={handleEventUpdate}
             onEventDelete={handleEventDelete}
-            categories={["Ders / Sınav", "Proje Teslimi", "Toplantı", "Kişisel Not", "Laboratuvar"]}
-            availableTags={["Önemli", "Acil", "Ödev", "Sınav", "Kütüphane", "Takım", "Staj"]}
+            categories={[
+              "Ders / Sınav", "Proje Teslimi", "Toplantı", "Kişisel Not", "Laboratuvar",
+              "Ders Kayıt", "Sınav Dönemi", "Akademik Dönem", "Resmi Tatil", "Dini Bayram"
+            ]}
+            availableTags={[
+              "Akademik Takvim", "Önemli", "Acil", "Ödev", "Sınav", "Final", "Bütünleme",
+              "Resmi Tatil", "Güz Yarıyılı", "Bahar Yarıyılı", "Kütüphane", "Staj"
+            ]}
             defaultView="month"
           />
         )}
